@@ -23,7 +23,7 @@ export function TiffanyHeader() {
       const isScrolled = window.scrollY > 80
       setScrolled(isScrolled)
       
-      let height = 56 // mobile default
+      let height = 72 // mobile default
       if (window.innerWidth >= 1024) { // lg
         height = isScrolled ? 60 : 132
       } else if (window.innerWidth >= 768) { // md
@@ -51,10 +51,10 @@ export function TiffanyHeader() {
   }, [menuOpen])
 
   return (
-    <div className="relative h-[56px] md:h-[124px] lg:h-[132px] w-full">
+    <div className="relative h-[72px] md:h-[124px] lg:h-[132px] w-full">
       <header className="fixed top-0 left-0 z-50 w-full bg-background shadow-sm">
       {/* ===== MOBILE HEADER ===== */}
-      <div className="flex items-center justify-between px-4 py-4 md:hidden">
+      <div className="flex items-center justify-between px-4 py-3 md:hidden">
         {/* Left: menu + search */}
         <div className="flex items-center gap-4 text-foreground">
           <button aria-label="Open menu" onClick={() => setMenuOpen(true)} className="transition-opacity hover:opacity-60">
@@ -67,7 +67,7 @@ export function TiffanyHeader() {
 
         {/* Center: wordmark */}
         <Link href="/" aria-label="Next Generation Gold home" className="px-2 text-center">
-          <span className="font-serif text-base font-medium tracking-tight text-foreground">
+          <span className="font-serif text-sm font-semibold tracking-wider text-foreground">
             NEXT GENERATION GOLD
           </span>
         </Link>

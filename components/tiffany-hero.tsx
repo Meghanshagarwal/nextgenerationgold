@@ -3,7 +3,7 @@ import Link from "next/link"
 export function TiffanyHero() {
   return (
     <section className="relative w-full overflow-hidden">
-      <div className="relative aspect-[16/10] w-full sm:aspect-[16/8] lg:aspect-[16/7]">
+      <div className="relative aspect-[4/5] w-full sm:aspect-[16/8] lg:aspect-[16/7]">
         <img
           src="/images/hero.png"
           alt="Elegant woman in a black turtleneck smiling, with a twilight cityscape and a stained glass lamp in the background"
