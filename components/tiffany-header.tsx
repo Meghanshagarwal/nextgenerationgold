@@ -5,13 +5,13 @@ import { useEffect, useState } from "react"
 import { Search, MapPin, User, ShoppingBag, ConciergeBell, Menu, X } from "lucide-react"
 
 const navItems = [
-  "HIGH JEWELRY",
-  "JEWELRY",
-  "LOVE & ENGAGEMENT",
-  "WATCHES",
-  "HOME",
-  "ACCESSORIES",
-  "GIFTS",
+  { name: "HIGH JEWELRY", href: "/category/high-jewelry" },
+  { name: "JEWELRY", href: "/category/jewelry" },
+  { name: "LOVE & ENGAGEMENT", href: "/category/love-engagement" },
+  { name: "WATCHES", href: "/category/watches" },
+  { name: "HOME", href: "/category/home" },
+  { name: "ACCESSORIES", href: "/category/accessories" },
+  { name: "GIFTS", href: "/category/gifts" },
 ]
 
 export function TiffanyHeader() {
@@ -146,12 +146,12 @@ export function TiffanyHeader() {
             {/* Nav links - centered */}
             <ul className="flex flex-1 flex-wrap items-center justify-center gap-x-7 gap-y-2 text-foreground">
               {navItems.map((item) => (
-                <li key={item}>
+                <li key={item.name}>
                   <Link
-                    href="#"
+                    href={item.href}
                     className="text-[13px] font-medium tracking-wide transition-opacity hover:opacity-60"
                   >
-                    {item}
+                    {item.name}
                   </Link>
                 </li>
               ))}
@@ -207,13 +207,13 @@ export function TiffanyHeader() {
             <nav className="flex-1 overflow-y-auto px-4 py-2">
               <ul className="flex flex-col">
                 {navItems.map((item) => (
-                  <li key={item} className="border-b border-foreground/5">
+                  <li key={item.name} className="border-b border-foreground/5">
                     <Link
-                      href="#"
+                      href={item.href}
                       onClick={() => setMenuOpen(false)}
                       className="block py-4 text-sm font-medium tracking-wide text-foreground transition-opacity hover:opacity-60"
                     >
-                      {item}
+                      {item.name}
                     </Link>
                   </li>
                 ))}

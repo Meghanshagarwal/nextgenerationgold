@@ -1,9 +1,9 @@
 import Link from "next/link"
 
 const categories = [
-  { title: "Jewelry", image: "/images/cat-jewelry.png", href: "#" },
-  { title: "Love & Engagement", image: "/images/cat-engagement.png", href: "#" },
-  { title: "Gifts", image: "/images/cat-gifts.png", href: "#" },
+  { title: "Jewelry", image: "/images/cat-jewelry.png", href: "/category/jewelry" },
+  { title: "Love & Engagement", image: "/images/cat-engagement.png", href: "/category/love-engagement" },
+  { title: "Gifts", image: "/images/cat-gifts.png", href: "/category/gifts" },
 ]
 
 export function TiffanyCategories() {
