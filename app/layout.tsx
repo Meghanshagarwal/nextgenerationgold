@@ -15,9 +15,8 @@ const cormorant = Cormorant_Garamond({
 })
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'Next Generation Gold | Luxury Jewelry & Timeless Elegance',
+  description: 'Discover extraordinary jewelry, engagement rings, watches and accessories from Next Generation Gold. Crafted with passion since 1837.',
   icons: {
     icon: [
       {
