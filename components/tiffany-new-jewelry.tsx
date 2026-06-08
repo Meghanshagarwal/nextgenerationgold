@@ -42,13 +42,13 @@ export function TiffanyNewJewelry() {
         <div
           ref={scrollRef}
           onScroll={updateProgress}
-          className="flex snap-x snap-mandatory gap-8 overflow-x-auto px-6 pb-4 md:px-16 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex snap-x snap-mandatory gap-8 overflow-x-auto px-[calc((100vw-260px)/2)] sm:px-10 md:px-16 pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {products.map((product, index) => (
             <Link
               key={index}
               href={product.href}
-              className="group w-[260px] flex-none snap-start sm:w-[300px] md:w-[340px]"
+              className="group w-[260px] flex-none snap-center sm:snap-start sm:w-[300px] md:w-[340px]"
             >
               <div className="flex aspect-square w-full items-center justify-center overflow-hidden bg-background">
                 <img
