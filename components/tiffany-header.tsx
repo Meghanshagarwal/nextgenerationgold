@@ -19,10 +19,28 @@ export function TiffanyHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 80)
-    onScroll()
-    window.addEventListener("scroll", onScroll, { passive: true })
-    return () => window.removeEventListener("scroll", onScroll)
+    const updateHeaderHeight = () => {
+      const isScrolled = window.scrollY > 80
+      setScrolled(isScrolled)
+      
+      let height = 56 // mobile default
+      if (window.innerWidth >= 1024) { // lg
+        height = isScrolled ? 60 : 132
+      } else if (window.innerWidth >= 768) { // md
+        height = isScrolled ? 60 : 124
+      }
+      
+      document.documentElement.style.setProperty("--header-height", `${height}px`)
+    }
+
+    updateHeaderHeight()
+    window.addEventListener("scroll", updateHeaderHeight, { passive: true })
+    window.addEventListener("resize", updateHeaderHeight, { passive: true })
+    
+    return () => {
+      window.removeEventListener("scroll", updateHeaderHeight)
+      window.removeEventListener("resize", updateHeaderHeight)
+    }
   }, [])
 
   useEffect(() => {
@@ -33,7 +51,8 @@ export function TiffanyHeader() {
   }, [menuOpen])
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background shadow-sm">
+    <div className="relative h-[56px] md:h-[124px] lg:h-[132px] w-full">
+      <header className="fixed top-0 left-0 z-50 w-full bg-background shadow-sm">
       {/* ===== MOBILE HEADER ===== */}
       <div className="flex items-center justify-between px-4 py-4 md:hidden">
         {/* Left: menu + search */}
@@ -223,5 +242,6 @@ export function TiffanyHeader() {
         </div>
       )}
     </header>
+    </div>
   )
 }

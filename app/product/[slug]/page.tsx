@@ -57,7 +57,7 @@ export default function ProductPage() {
 
           {/* ========== LEFT COLUMN — STICKY ========== */}
           <div className="order-2 border-r border-border lg:order-1">
-            <div className="lg:sticky lg:top-[120px] lg:h-[calc(100vh-120px)] lg:overflow-y-auto lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden">
+            <div className="lg:sticky lg:top-[var(--header-height,132px)] lg:h-[calc(100vh-var(--header-height,132px))] lg:overflow-y-auto lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden transition-[top,height] duration-300 ease-in-out">
               <div className="px-6 py-10 md:px-10 lg:py-14">
                 {/* Collection name */}
                 <h1 className="font-serif text-2xl text-foreground md:text-[28px] leading-tight">
