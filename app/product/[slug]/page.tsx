@@ -2,18 +2,113 @@
 
 import { useParams } from "next/navigation"
 import Link from "next/link"
-import { useState } from "react"
-import { MapPin, ChevronRight, Heart, ChevronDown } from "lucide-react"
+import { useState, useEffect } from "react"
+import { MapPin, ChevronRight, Heart, ChevronDown, X } from "lucide-react"
 import { TiffanyHeader } from "@/components/tiffany-header"
 import { TiffanyFooter } from "@/components/tiffany-footer"
-import { getProduct, products } from "@/lib/products"
+import { getProduct, products, Product } from "@/lib/products"
 
 export default function ProductPage() {
   const params = useParams()
   const slug = params.slug as string
-  const product = getProduct(slug)
+  const [product, setProduct] = useState<Product | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [related, setRelated] = useState<Product[]>([])
   const [wishlist, setWishlist] = useState(false)
   const [moreDetailsOpen, setMoreDetailsOpen] = useState(false)
+  const [contactModalOpen, setContactModalOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: ""
+  })
+
+  useEffect(() => {
+    async function loadProduct() {
+      try {
+        const res = await fetch("/api/products")
+        if (res.ok) {
+          const allProducts: Product[] = await res.json()
+          const found = allProducts.find(p => p.slug === slug)
+          if (found) {
+            setProduct(found)
+            setRelated(allProducts.filter(p => p.collection === found.collection && p.slug !== found.slug))
+            setFormData({
+              name: "",
+              email: "",
+              subject: `Inquiry: NGG ${found.collection} - ${found.name}`,
+              message: `Dear Advisor,\n\nI am interested in learning more about the NGG ${found.collection} - ${found.name} (${found.price}). Please contact me at your earliest convenience.`
+            })
+            setLoading(false)
+            return
+          }
+        }
+      } catch (e) {
+        console.error("API fetch failed, falling back to static data", e)
+      }
+      
+      const found = getProduct(slug)
+      if (found) {
+        setProduct(found)
+        setRelated(products.filter(p => p.collection === found.collection && p.slug !== found.slug))
+        setFormData({
+          name: "",
+          email: "",
+          subject: `Inquiry: NGG ${found.collection} - ${found.name}`,
+          message: `Dear Advisor,\n\nI am interested in learning more about the NGG ${found.collection} - ${found.name} (${found.price}). Please contact me at your earliest convenience.`
+        })
+      }
+      setLoading(false)
+    }
+    
+    loadProduct()
+  }, [slug])
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    try {
+      const res = await fetch("/api/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          productInterest: product?.name
+        })
+      })
+      if (res.ok) {
+        setSubmitted(true)
+        setTimeout(() => {
+          setContactModalOpen(false)
+          setSubmitted(false)
+          setFormData(prev => ({
+            ...prev,
+            name: "",
+            email: ""
+          }))
+        }, 2000)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-background">
+        <TiffanyHeader />
+        <div className="flex min-h-[60vh] flex-col items-center justify-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-t border-foreground" />
+        </div>
+        <TiffanyFooter />
+      </main>
+    )
+  }
 
   if (!product) {
     return (
@@ -35,11 +130,6 @@ export default function ProductPage() {
       </main>
     )
   }
-
-  // Get related products (same collection, excluding current)
-  const related = products.filter(
-    (p) => p.collection === product.collection && p.slug !== product.slug
-  )
 
 
   return (
@@ -73,6 +163,7 @@ export default function ProductPage() {
                   {/* Contact Advisor */}
                   <button
                     id="contact-advisor-btn"
+                    onClick={() => setContactModalOpen(true)}
                     className="flex w-full items-center justify-center gap-2 border border-foreground bg-transparent px-8 py-4 text-xs font-medium tracking-widest text-foreground uppercase transition-all duration-300 hover:bg-foreground hover:text-background active:scale-[0.98]"
                   >
                     Contact Your Advisor
@@ -327,6 +418,94 @@ export default function ProductPage() {
       </section>
 
       <TiffanyFooter />
+
+      {/* Contact Advisor Modal */}
+      {contactModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setContactModalOpen(false)} />
+          <div className="relative z-10 w-full max-w-lg bg-background p-8 border border-border shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setContactModalOpen(false)}
+              className="absolute right-6 top-6 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {submitted ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="h-12 w-12 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="font-serif text-2xl text-foreground mb-2">Message Sent</h3>
+                <p className="text-sm text-muted-foreground">An advisor will get back to you shortly.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleContactSubmit} className="flex flex-col gap-5">
+                <div>
+                  <h3 className="font-serif text-2xl text-foreground">Contact Advisor</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Please fill out the form below to speak with an advisor.</p>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full border border-border bg-transparent px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors"
+                    placeholder="Enter your name"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full border border-border bg-transparent px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors"
+                    placeholder="Enter your email"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground">Subject</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.subject}
+                    onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                    className="w-full border border-border bg-transparent px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground">Message</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={formData.message}
+                    onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                    className="w-full border border-border bg-transparent px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors resize-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="mt-2 flex w-full items-center justify-center bg-foreground py-4 text-xs font-medium tracking-widest text-background uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {submitting ? "Sending..." : "Submit Inquiry"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   )
 }

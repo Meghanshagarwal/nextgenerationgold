@@ -3,13 +3,29 @@
 import { useRef, useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { products } from "@/lib/products"
+import { products, Product } from "@/lib/products"
 
 export function TiffanyNewJewelry() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [progress, setProgress] = useState(0)
   const [atStart, setAtStart] = useState(true)
   const [atEnd, setAtEnd] = useState(false)
+  const [productList, setProductList] = useState<Product[]>(products)
+
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const res = await fetch("/api/products")
+        if (res.ok) {
+          const data = await res.json()
+          setProductList(data)
+        }
+      } catch (e) {
+        console.error("Failed to load products dynamically:", e)
+      }
+    }
+    loadProducts()
+  }, [])
 
   const updateProgress = useCallback(() => {
     const el = scrollRef.current
@@ -44,7 +60,7 @@ export function TiffanyNewJewelry() {
           onScroll={updateProgress}
           className="flex snap-x snap-mandatory gap-8 overflow-x-auto px-[calc((100vw-260px)/2)] sm:px-10 md:px-16 pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {products.map((product, index) => (
+          {productList.map((product, index) => (
             <Link
               key={index}
               href={product.href}
