@@ -12,7 +12,6 @@ export default function ProductPage() {
   const params = useParams()
   const slug = params.slug as string
   const product = getProduct(slug)
-  const [addedToCart, setAddedToCart] = useState(false)
   const [wishlist, setWishlist] = useState(false)
   const [moreDetailsOpen, setMoreDetailsOpen] = useState(false)
 
@@ -42,10 +41,6 @@ export default function ProductPage() {
     (p) => p.collection === product.collection && p.slug !== product.slug
   )
 
-  const handleAddToCart = () => {
-    setAddedToCart(true)
-    setTimeout(() => setAddedToCart(false), 2500)
-  }
 
   return (
     <main className="min-h-screen bg-background">
@@ -74,14 +69,6 @@ export default function ProductPage() {
 
                 {/* Actions */}
                 <div className="mt-8 flex flex-col gap-3">
-                  {/* Add to Cart */}
-                  <button
-                    id="add-to-cart-btn"
-                    onClick={handleAddToCart}
-                    className="flex w-full items-center justify-center gap-2 bg-foreground px-8 py-4 text-xs font-medium tracking-widest text-background uppercase transition-all duration-300 hover:opacity-90 active:scale-[0.98]"
-                  >
-                    {addedToCart ? "Added to Cart" : "Add to Cart"}
-                  </button>
 
                   {/* Contact Advisor */}
                   <button
