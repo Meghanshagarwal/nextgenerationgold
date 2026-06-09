@@ -1,11 +1,11 @@
 import Link from "next/link"
 
-export function TiffanyWorld() {
+export function NggWorld() {
   return (
     <section className="relative w-full overflow-hidden">
       <div className="relative aspect-[16/10] w-full sm:aspect-[16/7] lg:aspect-[16/6]">
         <img
-          src="/images/world-tiffany.png"
+          src="/images/world-ngg.png"
           alt="Next Generation Gold flagship store facade at twilight"
           className="h-full w-full object-cover"
         />

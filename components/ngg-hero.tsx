@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-export function TiffanyHero() {
+export function NggHero() {
   return (
     <section className="relative w-full overflow-hidden">
       <div className="relative aspect-[4/5] w-full sm:aspect-[16/8] lg:aspect-[16/7]">

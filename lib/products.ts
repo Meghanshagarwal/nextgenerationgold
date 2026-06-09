@@ -18,7 +18,7 @@ export const products: Product[] = [
     image: "/images/prod-bracelet-yellow.png",
     collection: "Signature Collection",
     name: "Chain Bracelet in Yellow Gold, 11 mm",
-    price: "$8,900",
+    price: "₹8,900",
     href: "/product/chain-bracelet-yellow-gold",
     description:
       "Bold and luminous, this 18k yellow gold chain bracelet from the Signature Collection makes a powerful statement. Its substantial 11 mm links catch the light from every angle, transforming an everyday accessory into an heirloom.",
@@ -36,7 +36,7 @@ export const products: Product[] = [
     image: "/images/prod-pendant-rose.png",
     collection: "HardWear",
     name: "Small Double Link Pendant in Rose and White Gold",
-    price: "$3,100",
+    price: "₹3,100",
     href: "/product/small-double-link-pendant-rose-white-gold",
     description:
       "Two interlocking links in contrasting 18k rose and white gold create a striking pendant that symbolises connection. Suspended from a delicate chain, this HardWear piece balances strength and elegance.",
@@ -54,7 +54,7 @@ export const products: Product[] = [
     image: "/images/prod-link-bracelet.png",
     collection: "HardWear",
     name: "Micro Link Bracelet in Rose Gold",
-    price: "$5,500",
+    price: "₹5,500",
     href: "/product/micro-link-bracelet-rose-gold",
     description:
       "Refined yet daring, the HardWear Micro Link Bracelet in 18k rose gold features interlocking graduated links that drape the wrist with fluidity. A modern interpretation of industrial design made precious.",
@@ -72,7 +72,7 @@ export const products: Product[] = [
     image: "/images/prod-smile-pendant.png",
     collection: "Smile",
     name: "Smile Medium Pendant in Rose Gold with White Mother-of-pearl",
-    price: "$2,400",
+    price: "₹2,400",
     href: "/product/smile-medium-pendant-rose-gold",
     description:
       "The iconic Smile arc, rendered in warm 18k rose gold and inlaid with luminous white mother-of-pearl. A joyful silhouette that rests beautifully at the collarbone, radiating optimism and grace.",
@@ -90,7 +90,7 @@ export const products: Product[] = [
     image: "/images/prod-bracelet-yellow.png",
     collection: "Smile",
     name: "Smile Medium Bracelet in Rose Gold with White Mother-of-pearl",
-    price: "$2,200",
+    price: "₹2,200",
     href: "/product/smile-medium-bracelet-rose-gold",
     description:
       "The Smile bracelet brings a gentle curve of 18k rose gold to the wrist, accented with a delicate mother-of-pearl inlay. Designed for effortless stacking or as a standalone expression of joy.",

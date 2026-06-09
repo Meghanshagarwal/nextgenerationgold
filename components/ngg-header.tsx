@@ -14,7 +14,7 @@ const navItems = [
   { name: "GIFTS", href: "/category/gifts" },
 ]
 
-export function TiffanyHeader() {
+export function NggHeader() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 

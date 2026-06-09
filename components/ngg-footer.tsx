@@ -15,7 +15,7 @@ const footerColumns = [
   },
 ]
 
-export function TiffanyFooter() {
+export function NggFooter() {
   return (
     <footer className="bg-foreground text-background">
       <div className="mx-auto max-w-[1600px] px-6 py-16 md:px-10">

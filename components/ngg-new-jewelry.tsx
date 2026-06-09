@@ -5,7 +5,7 @@ import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { products, Product } from "@/lib/products"
 
-export function TiffanyNewJewelry() {
+export function NggNewJewelry() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [progress, setProgress] = useState(0)
   const [atStart, setAtStart] = useState(true)

@@ -4,8 +4,8 @@ import { useParams } from "next/navigation"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { MapPin, ChevronRight, Heart, ChevronDown, X } from "lucide-react"
-import { TiffanyHeader } from "@/components/tiffany-header"
-import { TiffanyFooter } from "@/components/tiffany-footer"
+import { NggHeader } from "@/components/ngg-header"
+import { NggFooter } from "@/components/ngg-footer"
 import { getProduct, products, Product } from "@/lib/products"
 
 export default function ProductPage() {
@@ -101,11 +101,11 @@ export default function ProductPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-background">
-        <TiffanyHeader />
+        <NggHeader />
         <div className="flex min-h-[60vh] flex-col items-center justify-center">
           <div className="h-10 w-10 animate-spin rounded-full border-t border-foreground" />
         </div>
-        <TiffanyFooter />
+        <NggFooter />
       </main>
     )
   }
@@ -113,7 +113,7 @@ export default function ProductPage() {
   if (!product) {
     return (
       <main className="min-h-screen bg-background">
-        <TiffanyHeader />
+        <NggHeader />
         <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
           <h1 className="font-serif text-4xl text-foreground">Product Not Found</h1>
           <p className="mt-4 text-muted-foreground">
@@ -126,7 +126,7 @@ export default function ProductPage() {
             Return to Homepage
           </Link>
         </div>
-        <TiffanyFooter />
+        <NggFooter />
       </main>
     )
   }
@@ -134,7 +134,7 @@ export default function ProductPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <TiffanyHeader />
+      <NggHeader />
 
       {/* ===== Product Section — Two Column Layout ===== */}
       <section className="mx-auto max-w-[1600px]">
@@ -417,7 +417,7 @@ export default function ProductPage() {
         </div>
       </section>
 
-      <TiffanyFooter />
+      <NggFooter />
 
       {/* Contact Advisor Modal */}
       {contactModalOpen && (

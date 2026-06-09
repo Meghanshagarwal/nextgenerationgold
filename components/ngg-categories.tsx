@@ -6,7 +6,7 @@ const categories = [
   { title: "Gifts", image: "/images/cat-gifts.png", href: "/category/gifts" },
 ]
 
-export function TiffanyCategories() {
+export function NggCategories() {
   return (
     <section className="mx-auto max-w-[1600px] px-6 py-16 md:px-10 md:py-24">
       <h2 className="mb-10 text-center font-serif text-3xl text-foreground text-balance md:text-4xl">

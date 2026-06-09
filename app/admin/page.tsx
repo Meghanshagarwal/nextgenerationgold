@@ -83,7 +83,7 @@ export default function AdminPage() {
     setFormData({
       name: "",
       collection: "Signature Collection",
-      price: "$",
+      price: "₹",
       description: "",
       material: "",
       image: "/images/prod-bracelet-yellow.png", // prefilled premium asset
@@ -531,7 +531,7 @@ export default function AdminPage() {
                   value={formData.price}
                   onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
                   className="w-full bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
-                  placeholder="e.g. $4,200"
+                  placeholder="e.g. ₹4,200"
                 />
               </div>
 

@@ -4,8 +4,8 @@ import { useParams } from "next/navigation"
 import Link from "next/link"
 import { useState, useEffect, useMemo } from "react"
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react"
-import { TiffanyHeader } from "@/components/tiffany-header"
-import { TiffanyFooter } from "@/components/tiffany-footer"
+import { NggHeader } from "@/components/ngg-header"
+import { NggFooter } from "@/components/ngg-footer"
 import { Product } from "@/lib/products"
 
 export default function CategoryPage() {
@@ -155,7 +155,7 @@ export default function CategoryPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <TiffanyHeader />
+      <NggHeader />
 
       {/* ===== CATEGORY HERO BANNER ===== */}
       <section className="border-b border-border bg-secondary py-16 md:py-24 text-center">
@@ -331,7 +331,7 @@ export default function CategoryPage() {
         </div>
       )}
 
-      <TiffanyFooter />
+      <NggFooter />
     </main>
   )
 }

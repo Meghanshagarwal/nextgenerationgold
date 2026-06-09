@@ -29,7 +29,7 @@ function EditorialBlock({ eyebrow, title, description, image, reverse }: Editori
   )
 }
 
-export function TiffanyEditorial() {
+export function NggEditorial() {
   return (
     <section className="bg-secondary">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-20 px-6 py-20 md:px-10 md:py-28">

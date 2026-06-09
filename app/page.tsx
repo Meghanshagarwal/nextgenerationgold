@@ -1,21 +1,21 @@
-import { TiffanyHeader } from "@/components/tiffany-header"
-import { TiffanyHero } from "@/components/tiffany-hero"
-import { TiffanyCategories } from "@/components/tiffany-categories"
-import { TiffanyEditorial } from "@/components/tiffany-editorial"
-import { TiffanyNewJewelry } from "@/components/tiffany-new-jewelry"
-import { TiffanyWorld } from "@/components/tiffany-world"
-import { TiffanyFooter } from "@/components/tiffany-footer"
+import { NggHeader } from "@/components/ngg-header"
+import { NggHero } from "@/components/ngg-hero"
+import { NggCategories } from "@/components/ngg-categories"
+import { NggEditorial } from "@/components/ngg-editorial"
+import { NggNewJewelry } from "@/components/ngg-new-jewelry"
+import { NggWorld } from "@/components/ngg-world"
+import { NggFooter } from "@/components/ngg-footer"
 
 export default function Page() {
   return (
     <main className="min-h-screen bg-background">
-      <TiffanyHeader />
-      <TiffanyHero />
-      <TiffanyCategories />
-      <TiffanyEditorial />
-      <TiffanyNewJewelry />
-      <TiffanyWorld />
-      <TiffanyFooter />
+      <NggHeader />
+      <NggHero />
+      <NggCategories />
+      <NggEditorial />
+      <NggNewJewelry />
+      <NggWorld />
+      <NggFooter />
     </main>
   )
 }
