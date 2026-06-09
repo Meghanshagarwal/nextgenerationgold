@@ -14,7 +14,8 @@ import {
   ArrowLeft,
   X,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Star
 } from "lucide-react"
 import { Product } from "@/lib/products"
 import { ContactSubmission } from "@/lib/db"
@@ -44,7 +45,8 @@ export default function AdminPage() {
     material: "",
     image: "",
     details: "",
-    sku: ""
+    sku: "",
+    featured: true
   })
 
   // Selected contact for detail view modal
@@ -86,7 +88,8 @@ export default function AdminPage() {
       material: "",
       image: "/images/prod-bracelet-yellow.png", // prefilled premium asset
       details: "",
-      sku: ""
+      sku: "",
+      featured: true
     })
     setFormError("")
     setFormSuccess("")
@@ -104,7 +107,8 @@ export default function AdminPage() {
       material: product.material,
       image: product.image,
       details: product.details.join("\n"),
-      sku: product.sku
+      sku: product.sku,
+      featured: product.featured !== false
     })
     setFormError("")
     setFormSuccess("")
@@ -370,7 +374,12 @@ export default function AdminPage() {
                                     <img src={p.image} alt="" className="h-full object-contain" />
                                   </div>
                                   <div>
-                                    <p className="font-serif text-sm text-foreground">{p.name}</p>
+                                    <p className="font-serif text-sm text-foreground flex items-center gap-1.5">
+                                      {p.name}
+                                      {p.featured !== false && (
+                                        <Star className="h-3.5 w-3.5 text-[#C5A880] fill-[#C5A880] flex-none" title="Featured on Homepage" />
+                                      )}
+                                    </p>
                                     <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{p.material}</p>
                                   </div>
                                 </td>
@@ -558,6 +567,18 @@ export default function AdminPage() {
                   className="w-full bg-[#161616] border border-[#222] px-4 py-3 text-sm focus:outline-none focus:border-[#C5A880] transition-colors rounded text-foreground"
                   placeholder="Leave empty for auto-generated"
                 />
+              </div>
+
+              <div className="flex flex-col gap-1.5 md:col-span-2">
+                <label className="flex items-center gap-3 text-xs uppercase tracking-widest font-semibold text-muted-foreground cursor-pointer select-none py-1">
+                  <input
+                    type="checkbox"
+                    checked={formData.featured}
+                    onChange={(e) => setFormData(prev => ({ ...prev, featured: e.target.checked }))}
+                    className="h-4 w-4 border-[#222] bg-[#161616] accent-[#C5A880] rounded focus:ring-0"
+                  />
+                  <span>Feature on Homepage Slider (Feature It)</span>
+                </label>
               </div>
 
               <div className="flex flex-col gap-1.5 md:col-span-2">

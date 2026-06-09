@@ -33,7 +33,8 @@ export async function POST(req: Request) {
       description: body.description || "",
       details: Array.isArray(body.details) ? body.details : (body.details ? body.details.split("\n").map((d: string) => d.trim()).filter(Boolean) : []),
       material: body.material || "",
-      sku: body.sku || `NGG-${body.collection.substring(0,3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`
+      sku: body.sku || `NGG-${body.collection.substring(0,3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
+      featured: body.featured !== false
     }
 
     products.push(newProduct)

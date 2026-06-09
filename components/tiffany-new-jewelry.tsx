@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useEffect, useCallback } from "react"
+import { useRef, useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { products, Product } from "@/lib/products"
@@ -26,6 +26,11 @@ export function TiffanyNewJewelry() {
     }
     loadProducts()
   }, [])
+
+  const featuredProducts = useMemo(() => {
+    const filtered = productList.filter(p => p.featured !== false)
+    return filtered.length > 0 ? filtered : productList
+  }, [productList])
 
   const updateProgress = useCallback(() => {
     const el = scrollRef.current
@@ -60,7 +65,7 @@ export function TiffanyNewJewelry() {
           onScroll={updateProgress}
           className="flex snap-x snap-mandatory gap-8 overflow-x-auto px-[calc((100vw-260px)/2)] sm:px-10 md:px-16 pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {productList.map((product, index) => (
+          {featuredProducts.map((product, index) => (
             <Link
               key={index}
               href={product.href}

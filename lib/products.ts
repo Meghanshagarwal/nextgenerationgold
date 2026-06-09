@@ -9,6 +9,7 @@ export type Product = {
   details: string[]
   material: string
   sku: string
+  featured?: boolean
 }
 
 export const products: Product[] = [
