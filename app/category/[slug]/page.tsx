@@ -157,50 +157,93 @@ export default function CategoryPage() {
     <main className="min-h-screen bg-background">
       <NggHeader />
 
-      {/* ===== CATEGORY HERO BANNER ===== */}
-      <section className="border-b border-border bg-secondary py-16 md:py-24 text-center">
-        <div className="mx-auto max-w-[1600px] px-6 md:px-10">
-          <span className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">Next Generation Gold</span>
-          <h1 className="mt-4 font-serif text-4xl text-foreground md:text-5xl lg:text-6xl">{categoryTitle}</h1>
-          <p className="mx-auto mt-4 max-w-lg text-sm text-muted-foreground leading-relaxed">
-            Discover exquisite craftsmanship and iconic designs engineered to celebrate life's most meaningful moments.
-          </p>
-        </div>
-      </section>
-
-      {/* ===== MAIN CONTROLS ROW ===== */}
-      <section className="border-b border-border py-4 bg-background sticky top-[72px] md:top-[124px] lg:top-[132px] z-40 shadow-sm transition-[top] duration-300">
-        <div className="mx-auto max-w-[1600px] px-6 md:px-10 flex items-center justify-between">
-          {/* Desktop Filter Toggle Button */}
-          <button 
-            onClick={() => setMobileFiltersOpen(true)}
-            className="flex items-center gap-2 text-xs font-semibold tracking-widest uppercase hover:opacity-60 transition-opacity"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            Filters {(selectedCollections.length + selectedMaterials.length) > 0 && `(${selectedCollections.length + selectedMaterials.length})`}
-          </button>
-
-          {/* Product Count (Desktop only) */}
-          <span className="hidden md:inline text-xs text-muted-foreground tracking-wider">
-            {processedProducts.length} {processedProducts.length === 1 ? "Product" : "Products"}
-          </span>
-
-          {/* Sorting Dropdown */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground tracking-wider uppercase font-semibold hidden sm:inline">Sort:</span>
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="appearance-none bg-transparent border-none pr-8 pl-2 py-1 text-xs font-semibold tracking-widest uppercase focus:outline-none cursor-pointer"
-              >
-                <option value="featured">Featured</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-              </select>
-              <ChevronDown className="absolute right-0 top-1.5 h-3.5 w-3.5 text-foreground pointer-events-none" />
+      {/* ===== CATEGORY HERO BANNER / EDITORIAL ===== */}
+      {slug === "high-jewelry" ? (
+        <section className="bg-background pt-12 pb-8 md:pt-16 text-center">
+          <div className="mx-auto max-w-[1200px] px-6">
+            <h1 className="font-serif text-4xl text-foreground md:text-5xl lg:text-6xl tracking-wide">High Jewelry</h1>
+            <p className="mx-auto mt-6 max-w-3xl text-sm md:text-base text-muted-foreground leading-relaxed">
+              As the premier Indian high jewelry house, Next Generation Gold is celebrated for its inventive artistry, unparalleled craft and a love of extraordinary diamonds and colored gemstones. Our artisans set these miracles of nature into exquisite creations, symbolizing a constant dialogue between maker and material, craft and creativity.
+            </p>
+          </div>
+          
+          {/* Editorial Banner */}
+          <div className="mx-auto max-w-[1600px] px-6 md:px-10 mt-12 mb-4">
+            <div className="relative aspect-[16/7] w-full overflow-hidden bg-secondary">
+              <img 
+                src="/images/high-jewelry-banner.png" 
+                alt="Next Generation Gold High Jewelry Collection"
+                className="h-full w-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex flex-col justify-end p-8 md:p-16">
+                <div className="max-w-xl text-left text-white">
+                  <h3 className="font-serif text-3xl md:text-4xl lg:text-5xl font-light tracking-wide leading-tight">
+                    Introducing Our New Collection
+                  </h3>
+                  <p className="mt-3 text-xs md:text-sm tracking-widest uppercase font-medium text-white/90">
+                    A Celebration of Unmatched Artistry
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
+        </section>
+      ) : (
+        <section className="border-b border-border bg-secondary py-16 md:py-24 text-center">
+          <div className="mx-auto max-w-[1600px] px-6 md:px-10">
+            <span className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">Next Generation Gold</span>
+            <h1 className="mt-4 font-serif text-4xl text-foreground md:text-5xl lg:text-6xl">{categoryTitle}</h1>
+            <p className="mx-auto mt-4 max-w-lg text-sm text-muted-foreground leading-relaxed">
+              Discover exquisite craftsmanship and iconic designs engineered to celebrate life's most meaningful moments.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* ===== CONTROLS ROW ===== */}
+      <section className="border-y border-border py-4 bg-background sticky top-[72px] md:top-[124px] lg:top-[132px] z-40 transition-[top] duration-300">
+        <div className="mx-auto max-w-[1600px] px-6 md:px-10 flex items-center justify-between gap-4">
+          
+          {/* Left Column: Sort */}
+          <div className="relative border border-border px-5 py-3 min-w-[180px] flex items-center justify-between bg-background hover:bg-secondary transition-colors">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="appearance-none bg-transparent border-none pr-8 pl-1 py-0.5 text-[10px] font-bold tracking-widest uppercase focus:outline-none cursor-pointer w-full text-foreground"
+            >
+              <option value="featured">Sort By: Featured</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+            </select>
+            <ChevronDown className="absolute right-4 top-4.5 h-3.5 w-3.5 text-foreground pointer-events-none" />
+          </div>
+
+          {/* Center Column: Title & Count & Personalize */}
+          <div className="flex items-center gap-8 justify-center flex-1">
+            <span className="hidden lg:inline text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
+              {processedProducts.length} {processedProducts.length === 1 ? "Product" : "Products"}
+            </span>
+            <h2 className="font-serif text-xl md:text-2xl lg:text-3xl text-foreground tracking-wide text-center uppercase min-w-[120px] select-none">
+              {slug === "high-jewelry" ? "High Jewelry" : categoryTitle}
+            </h2>
+            <label className="hidden lg:flex items-center gap-2 cursor-pointer select-none text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
+              <input 
+                type="checkbox"
+                className="h-3.5 w-3.5 border-border accent-foreground rounded focus:ring-0 cursor-pointer"
+              />
+              <span>Personalize</span>
+            </label>
+          </div>
+
+          {/* Right Column: Filters */}
+          <button
+            onClick={() => setMobileFiltersOpen(true)}
+            className="border border-border px-5 py-3.5 flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase hover:bg-secondary transition-colors cursor-pointer bg-background"
+          >
+            <span>Filters</span>
+            <SlidersHorizontal className="h-3.5 w-3.5 text-foreground" />
+          </button>
+
         </div>
       </section>
 
@@ -226,9 +269,9 @@ export default function CategoryPage() {
         ) : (
           <div className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {processedProducts.map((p) => (
-              <Link key={p.slug} href={p.href} className="group block">
+              <Link key={p.slug} href={p.href} className="group block text-center">
                 {/* Image Aspect Box */}
-                <div className="flex aspect-square w-full items-center justify-center overflow-hidden bg-secondary p-6">
+                <div className="flex aspect-square w-full items-center justify-center overflow-hidden bg-[#F9F9F9] group-hover:bg-[#F3F3F3] transition-colors duration-300 p-8">
                   <img
                     src={p.image}
                     alt={p.name}
@@ -236,12 +279,12 @@ export default function CategoryPage() {
                   />
                 </div>
                 {/* Details */}
-                <div className="mt-5 text-center">
-                  <p className="font-serif text-lg text-foreground">{p.collection}</p>
-                  <p className="mx-auto mt-2 max-w-[260px] text-sm leading-relaxed text-muted-foreground group-hover:underline">
+                <div className="mt-5">
+                  <p className="font-serif text-lg text-foreground tracking-wide">{p.collection}</p>
+                  <p className="mx-auto mt-1 max-w-[260px] text-xs uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors leading-relaxed">
                     {p.name}
                   </p>
-                  <p className="mt-2 text-sm font-medium text-foreground">{p.price}</p>
+                  <p className="mt-2 text-sm font-semibold text-foreground">{p.price}</p>
                 </div>
               </Link>
             ))}
