@@ -1,62 +1,153 @@
-import fs from "fs"
-import path from "path"
+import { createClient } from "@supabase/supabase-js"
 import { products as defaultProducts, Product } from "./products"
 
-const dataDir = path.join(process.cwd(), "data")
-const productsFile = path.join(dataDir, "products.json")
-const contactsFile = path.join(dataDir, "contacts.json")
+let supabaseClient: any = null
 
-// Helper to ensure data directory exists
-function ensureDataDir() {
-  if (!fs.existsSync(dataDir)) {
-    try {
-      fs.mkdirSync(dataDir, { recursive: true })
-    } catch (e) {
-      console.error("Failed to create data directory:", e)
+function getSupabase() {
+  if (supabaseClient) return supabaseClient
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!url || !key) {
+    return null
+  }
+
+  supabaseClient = createClient(url, key, {
+    auth: {
+      persistSession: false,
+    },
+  })
+  return supabaseClient
+}
+
+// Helper to seed products if table is empty
+async function seedProductsIfNeeded() {
+  const supabase = getSupabase()
+  if (!supabase) return
+
+  try {
+    const { count, error } = await supabase
+      .from("products")
+      .select("*", { count: "exact", head: true })
+
+    if (error) {
+      console.error("Error checking products count for seeding:", error)
+      return
     }
+
+    if (count === 0) {
+      console.log("Database is empty, seeding default products...")
+      const itemsToInsert = defaultProducts.map((p) => ({
+        slug: p.slug,
+        image: p.image,
+        collection: p.collection,
+        name: p.name,
+        price: p.price,
+        href: p.href,
+        description: p.description,
+        details: p.details,
+        material: p.material,
+        sku: p.sku,
+        featured: p.featured !== false,
+      }))
+
+      const { error: insertError } = await supabase
+        .from("products")
+        .insert(itemsToInsert)
+
+      if (insertError) {
+        console.error("Error seeding default products:", insertError)
+      } else {
+        console.log("Default products seeded successfully!")
+      }
+    }
+  } catch (e) {
+    console.error("Failed to seed database:", e)
   }
 }
 
-// In-memory fallbacks for serverless environments (Vercel)
-let inMemoryProducts: Product[] | null = null
-let inMemoryContacts: ContactSubmission[] | null = null
-
-export function readProducts(): Product[] {
-  ensureDataDir()
-  if (inMemoryProducts) {
-    return inMemoryProducts
-  }
-
-  if (!fs.existsSync(productsFile)) {
-    try {
-      fs.writeFileSync(productsFile, JSON.stringify(defaultProducts, null, 2))
-      return defaultProducts
-    } catch (e) {
-      console.warn("Could not write products file (probably read-only Vercel). Using defaultProducts in memory.")
-      inMemoryProducts = defaultProducts
-      return defaultProducts
-    }
-  }
-
-  try {
-    const data = fs.readFileSync(productsFile, "utf-8")
-    const parsed = JSON.parse(data)
-    inMemoryProducts = parsed
-    return parsed
-  } catch (e) {
-    console.error("Failed to read products file, falling back to defaultProducts:", e)
+export async function readProducts(): Promise<Product[]> {
+  const supabase = getSupabase()
+  if (!supabase) {
+    console.warn("Supabase env variables missing or client not initialized. Falling back to default products.")
     return defaultProducts
   }
+
+  // Trigger seeding check
+  await seedProductsIfNeeded()
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("created_at", { ascending: true })
+
+  if (error) {
+    console.error("Error reading products from Supabase:", error)
+    return defaultProducts
+  }
+
+  return (data || []).map((row: any) => ({
+    slug: row.slug,
+    image: row.image,
+    collection: row.collection,
+    name: row.name,
+    price: row.price,
+    href: row.href,
+    description: row.description,
+    details: row.details,
+    material: row.material,
+    sku: row.sku,
+    featured: row.featured !== false,
+  }))
 }
 
-export function writeProducts(products: Product[]) {
-  ensureDataDir()
-  inMemoryProducts = products
-  try {
-    fs.writeFileSync(productsFile, JSON.stringify(products, null, 2))
-  } catch (e) {
-    console.error("Failed to write products to filesystem (e.g. read-only on Vercel):", e)
+export async function writeProducts(products: Product[]) {
+  const supabase = getSupabase()
+  if (!supabase) {
+    console.warn("Supabase env variables missing. Cannot write.")
+    return
   }
+
+  const items = products.map((p) => ({
+    slug: p.slug,
+    image: p.image,
+    collection: p.collection,
+    name: p.name,
+    price: p.price,
+    href: p.href,
+    description: p.description,
+    details: p.details,
+    material: p.material,
+    sku: p.sku,
+    featured: p.featured !== false,
+  }))
+
+  const { error } = await supabase.from("products").upsert(items, { onConflict: "slug" })
+
+  if (error) {
+    console.error("Error writing products to Supabase:", error)
+  }
+}
+
+export async function deleteProduct(slug: string): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase) {
+    console.warn("Supabase env variables missing. Cannot delete.")
+    return false
+  }
+
+  const { error } = await supabase
+    .from("products")
+    .delete()
+    .eq("slug", slug)
+
+  if (error) {
+    console.error("Error deleting product from Supabase:", error)
+    return false
+  }
+
+  return true
 }
 
 export type ContactSubmission = {
@@ -69,40 +160,54 @@ export type ContactSubmission = {
   createdAt: string
 }
 
-export function readContacts(): ContactSubmission[] {
-  ensureDataDir()
-  if (inMemoryContacts) {
-    return inMemoryContacts
-  }
-
-  if (!fs.existsSync(contactsFile)) {
-    try {
-      fs.writeFileSync(contactsFile, JSON.stringify([], null, 2))
-      return []
-    } catch (e) {
-      console.warn("Could not write contacts file. Using empty array in memory.")
-      inMemoryContacts = []
-      return []
-    }
-  }
-
-  try {
-    const data = fs.readFileSync(contactsFile, "utf-8")
-    const parsed = JSON.parse(data)
-    inMemoryContacts = parsed
-    return parsed
-  } catch (e) {
-    console.error("Failed to read contacts file, falling back to empty array:", e)
+export async function readContacts(): Promise<ContactSubmission[]> {
+  const supabase = getSupabase()
+  if (!supabase) {
+    console.warn("Supabase env variables missing. Returning empty contacts.")
     return []
   }
+
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("*")
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    console.error("Error reading contacts from Supabase:", error)
+    return []
+  }
+
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    subject: row.subject || undefined,
+    message: row.message,
+    productInterest: row.product_interest || undefined,
+    createdAt: row.created_at,
+  }))
 }
 
-export function writeContacts(contacts: ContactSubmission[]) {
-  ensureDataDir()
-  inMemoryContacts = contacts
-  try {
-    fs.writeFileSync(contactsFile, JSON.stringify(contacts, null, 2))
-  } catch (e) {
-    console.error("Failed to write contacts to filesystem (e.g. read-only on Vercel):", e)
+export async function writeContacts(contacts: ContactSubmission[]) {
+  const supabase = getSupabase()
+  if (!supabase) {
+    console.warn("Supabase env variables missing. Cannot write contacts.")
+    return
+  }
+
+  const items = contacts.map((c) => ({
+    id: c.id && c.id.length > 10 ? c.id : undefined, // skip client generated temp ids to let postgres auto-generate uuid
+    name: c.name,
+    email: c.email,
+    subject: c.subject || null,
+    message: c.message,
+    product_interest: c.productInterest || null,
+    created_at: c.createdAt || new Date().toISOString(),
+  }))
+
+  const { error } = await supabase.from("contacts").upsert(items, { onConflict: "id" })
+
+  if (error) {
+    console.error("Error writing contacts to Supabase:", error)
   }
 }

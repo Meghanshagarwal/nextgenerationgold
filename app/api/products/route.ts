@@ -2,14 +2,14 @@ import { NextResponse } from "next/server"
 import { readProducts, writeProducts } from "@/lib/db"
 
 export async function GET() {
-  const products = readProducts()
+  const products = await readProducts()
   return NextResponse.json(products)
 }
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const products = readProducts()
+    const products = await readProducts()
     
     // simple validation
     if (!body.name || !body.collection || !body.price) {
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     }
 
     products.push(newProduct)
-    writeProducts(products)
+    await writeProducts(products)
     return NextResponse.json(newProduct, { status: 201 })
   } catch (error) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
