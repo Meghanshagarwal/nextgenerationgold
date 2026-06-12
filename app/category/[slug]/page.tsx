@@ -201,7 +201,7 @@ export default function CategoryPage() {
       )}
 
       {/* ===== CONTROLS ROW ===== */}
-      <section className="border-y border-border py-4 bg-background sticky top-[72px] md:top-[124px] lg:top-[132px] z-40 transition-[top] duration-300">
+      <section className="border-y border-border py-4 bg-background sticky top-[var(--header-height,132px)] z-40 transition-[top] duration-300">
         <div className="mx-auto max-w-[1600px] px-6 md:px-10 flex items-center justify-between gap-4">
           
           {/* Left Column: Sort */}
