@@ -35,12 +35,27 @@ export async function GET(req: Request) {
     })
 
     if (!res.ok) {
-      const err = await res.json()
-      return NextResponse.json({ error: err.message || "Failed to fetch media" }, { status: res.status })
+      let errMsg = "Failed to fetch media from WordPress"
+      try {
+        const contentType = res.headers.get("content-type")
+        if (contentType && contentType.includes("application/json")) {
+          const err = await res.json()
+          errMsg = err.message || errMsg
+        } else {
+          errMsg = `WordPress returned status ${res.status}: ${res.statusText || "HTML Error Response"}`
+        }
+      } catch (_) {}
+      return NextResponse.json({ error: errMsg }, { status: res.status })
     }
 
     const totalPages = res.headers.get("X-WP-TotalPages") || "1"
     const total = res.headers.get("X-WP-Total") || "0"
+    
+    const contentType = res.headers.get("content-type")
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await res.text()
+      return NextResponse.json({ error: `WordPress returned non-JSON content: ${text.substring(0, 150)}...` }, { status: 502 })
+    }
     const data = await res.json()
 
     const images = data.map((item: any) => ({
@@ -102,14 +117,25 @@ export async function POST(req: Request) {
     })
 
     if (!res.ok) {
-      const err = await res.json()
-      console.error("[media POST] WP upload failed:", err)
-      return NextResponse.json(
-        { error: err.message || "Upload to WordPress failed" },
-        { status: res.status }
-      )
+      let errMsg = "Upload to WordPress failed"
+      try {
+        const contentType = res.headers.get("content-type")
+        if (contentType && contentType.includes("application/json")) {
+          const err = await res.json()
+          errMsg = err.message || errMsg
+        } else {
+          errMsg = `WordPress returned status ${res.status}: ${res.statusText || "HTML Error Response"}`
+        }
+      } catch (_) {}
+      console.error("[media POST] WP upload failed:", errMsg)
+      return NextResponse.json({ error: errMsg }, { status: res.status })
     }
 
+    const contentType = res.headers.get("content-type")
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await res.text()
+      return NextResponse.json({ error: `WordPress upload response was non-JSON: ${text.substring(0, 150)}...` }, { status: 502 })
+    }
     const data = await res.json()
 
     return NextResponse.json({
@@ -145,8 +171,17 @@ export async function DELETE(req: Request) {
     })
 
     if (!res.ok) {
-      const err = await res.json()
-      return NextResponse.json({ error: err.message || "Failed to delete media from WordPress" }, { status: res.status })
+      let errMsg = "Failed to delete media from WordPress"
+      try {
+        const contentType = res.headers.get("content-type")
+        if (contentType && contentType.includes("application/json")) {
+          const err = await res.json()
+          errMsg = err.message || errMsg
+        } else {
+          errMsg = `WordPress returned status ${res.status}: ${res.statusText || "HTML Error Response"}`
+        }
+      } catch (_) {}
+      return NextResponse.json({ error: errMsg }, { status: res.status })
     }
 
     return NextResponse.json({ success: true })

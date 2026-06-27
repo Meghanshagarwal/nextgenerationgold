@@ -48,13 +48,22 @@ export function ImageUploader({ value, onSelect, label = "Image", required = fal
     try {
       const params = new URLSearchParams({ page: String(p), ...(q ? { search: q } : {}) })
       const res = await fetch(`/api/media?${params}`, { cache: "no-store" })
-      const data = await res.json()
+      
+      let data: any = {}
+      const contentType = res.headers.get("content-type")
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json()
+      } else {
+        const text = await res.text()
+        throw new Error(`WordPress server returned an invalid response (${res.status}): ${text.substring(0, 80)}...`)
+      }
+
       if (!res.ok) throw new Error(data.error || "Failed to load media")
       setImages(data.images || [])
       setTotalPages(data.totalPages || 1)
       setPage(p)
     } catch (e: any) {
-      setError(e.message)
+      setError(e.message || String(e))
     } finally {
       setLoading(false)
     }
