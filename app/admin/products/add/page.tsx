@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, CheckCircle, AlertTriangle, Sparkles } from "lucide-react"
+import { ImageUploader } from "@/components/image-uploader"
 
 type Category = {
   id: string | number
@@ -372,17 +373,12 @@ export default function AddProductPage() {
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Image URL</label>
-                <input
-                  type="text"
-                  name="image"
-                  value={formData.image}
-                  onChange={handleInputChange}
-                  className="w-full bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
-                  placeholder="Image path or absolute URL"
-                />
-              </div>
+              <ImageUploader
+                label="Product Image"
+                value={formData.image}
+                onSelect={(url) => setFormData(prev => ({ ...prev, image: url }))}
+                required
+              />
             </div>
           </div>
 

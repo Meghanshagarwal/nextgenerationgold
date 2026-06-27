@@ -21,6 +21,7 @@ import {
   Inbox,
   Info
 } from "lucide-react"
+import { ImageUploader } from "@/components/image-uploader"
 import { Product } from "@/lib/products"
 import { ContactSubmission } from "@/lib/db"
 
@@ -861,16 +862,11 @@ function AdminPageContent() {
                             required
                           />
                         </div>
-                        <div className="flex flex-col gap-2">
-                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Beginning Image URL</label>
-                          <input
-                            type="text"
-                            value={aboutUs.beginningImage || ""}
-                            onChange={(e) => setAboutUs({ ...aboutUs, beginningImage: e.target.value })}
-                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
-                            required
-                          />
-                        </div>
+                        <ImageUploader
+                          label="Beginning Section Image"
+                          value={aboutUs.beginningImage || ""}
+                          onSelect={(url) => setAboutUs({ ...aboutUs, beginningImage: url })}
+                        />
                       </div>
 
                       <div className="flex flex-col gap-2">
@@ -927,16 +923,11 @@ function AdminPageContent() {
                             required
                           />
                         </div>
-                        <div className="flex flex-col gap-2">
-                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Mission Image URL</label>
-                          <input
-                            type="text"
-                            value={aboutUs.missionImage || ""}
-                            onChange={(e) => setAboutUs({ ...aboutUs, missionImage: e.target.value })}
-                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
-                            required
-                          />
-                        </div>
+                        <ImageUploader
+                          label="Mission Section Image"
+                          value={aboutUs.missionImage || ""}
+                          onSelect={(url) => setAboutUs({ ...aboutUs, missionImage: url })}
+                        />
                       </div>
 
                       <div className="flex flex-col gap-2">
