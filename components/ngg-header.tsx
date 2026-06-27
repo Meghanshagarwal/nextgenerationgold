@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Search, MapPin, User, ShoppingBag, ConciergeBell, Menu, X } from "lucide-react"
 
 const navItems = [
@@ -17,6 +17,7 @@ const navItems = [
 export function NggHeader() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const headerRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const updateHeaderHeight = () => {
@@ -24,22 +25,36 @@ export function NggHeader() {
       setScrolled(isScrolled)
       
       let height = 72 // mobile default
-      if (window.innerWidth >= 1024) { // lg
-        height = isScrolled ? 60 : 132
-      } else if (window.innerWidth >= 768) { // md
-        height = isScrolled ? 60 : 124
+      if (headerRef.current) {
+        height = headerRef.current.offsetHeight
+      } else {
+        if (window.innerWidth >= 1024) { // lg
+          height = isScrolled ? 60 : 132
+        } else if (window.innerWidth >= 768) { // md
+          height = isScrolled ? 60 : 124
+        }
       }
       
       document.documentElement.style.setProperty("--header-height", `${height}px`)
     }
 
+    const handleScroll = () => {
+      updateHeaderHeight()
+      setTimeout(updateHeaderHeight, 100)
+      setTimeout(updateHeaderHeight, 310)
+    }
+
     updateHeaderHeight()
-    window.addEventListener("scroll", updateHeaderHeight, { passive: true })
+    window.addEventListener("scroll", handleScroll, { passive: true })
     window.addEventListener("resize", updateHeaderHeight, { passive: true })
     
+    // Also run a few delayed checks on load in case fonts/layout take time to settle
+    const timers = [100, 300, 600, 1000].map(delay => setTimeout(updateHeaderHeight, delay))
+    
     return () => {
-      window.removeEventListener("scroll", updateHeaderHeight)
+      window.removeEventListener("scroll", handleScroll)
       window.removeEventListener("resize", updateHeaderHeight)
+      timers.forEach(t => clearTimeout(t))
     }
   }, [])
 
@@ -52,7 +67,7 @@ export function NggHeader() {
 
   return (
     <div className="relative h-[72px] md:h-[124px] lg:h-[132px] w-full">
-      <header className="fixed top-0 left-0 z-50 w-full bg-background shadow-sm">
+      <header ref={headerRef} className="fixed top-0 left-0 z-50 w-full bg-background shadow-sm">
       {/* ===== MOBILE HEADER ===== */}
       <div className="flex items-center justify-between px-4 py-3 md:hidden">
         {/* Left: menu + search */}
