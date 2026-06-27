@@ -30,7 +30,7 @@ export default function AboutUsPage() {
   useEffect(() => {
     async function fetchAboutData() {
       try {
-        const res = await fetch("/api/about-us")
+        const res = await fetch("/api/about-us", { cache: "no-store" })
         if (res.ok) {
           setData(await res.json())
         }

@@ -37,15 +37,19 @@ export async function GET() {
         .eq("key", "about_us")
         .single()
 
+      if (error) {
+        console.warn("[about-us GET] Supabase error:", error.code, error.message)
+      }
+
       if (!error && data?.value) {
         return NextResponse.json({ ...defaults, ...data.value })
       }
     } catch (e) {
-      console.warn("Supabase read about_us failed, using defaults", e)
+      console.warn("[about-us GET] Supabase threw:", e)
     }
   }
 
-  // Fallback: return defaults (no filesystem on Vercel)
+  // Fallback: return defaults
   return NextResponse.json(defaults)
 }
 
@@ -56,7 +60,8 @@ export async function POST(req: Request) {
 
     const supabase = getSupabase()
     if (!supabase) {
-      // No Supabase configured – just return the merged value so the UI doesn't break
+      // No Supabase configured – return merged so UI shows success but warn
+      console.warn("[about-us POST] No Supabase env vars - settings NOT persisted")
       return NextResponse.json(merged)
     }
 
@@ -66,13 +71,16 @@ export async function POST(req: Request) {
       .upsert({ key: "about_us", value: merged }, { onConflict: "key" })
 
     if (error) {
-      console.error("Supabase upsert about_us failed:", error)
-      return NextResponse.json({ error: "Failed to save settings: " + error.message }, { status: 500 })
+      console.error("[about-us POST] Supabase upsert failed:", error.code, error.message, error.details, error.hint)
+      return NextResponse.json(
+        { error: `Supabase error (${error.code}): ${error.message}. Hint: ${error.hint || "Run the site_settings SQL migration in Supabase dashboard."}` },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json(merged)
   } catch (error: any) {
-    console.error("POST /api/about-us error:", error)
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
+    console.error("[about-us POST] Unexpected error:", error)
+    return NextResponse.json({ error: "Server error: " + (error?.message || String(error)) }, { status: 500 })
   }
 }
