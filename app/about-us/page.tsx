@@ -89,8 +89,8 @@ export default function AboutUsPage() {
           </div>
         </section>
 
-        {/* SECTION 2: Vision & Company Info */}
-        <section className="border-t border-b border-[#EAEAEA] bg-white py-16 lg:py-20">
+        {/* SECTION 2: Vision & Mission (experience) & Company Info */}
+        <section className="border-t border-[#EAEAEA] bg-white py-16 lg:py-20">
           <div className="max-w-7xl mx-auto px-6 sm:px-12">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
               
@@ -137,70 +137,51 @@ export default function AboutUsPage() {
                         <p className="text-[#1C1C1C] font-semibold mt-0.5">{data.setupDate}</p>
                       </div>
                     </div>
-                    
-                    <div className="flex items-start gap-3.5 text-xs">
-                      <Landmark className="h-4 w-4 text-[#9A7B4F] shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Capital</p>
-                        <p className="text-[#1C1C1C] font-semibold mt-0.5">{data.capital}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3.5 text-xs">
-                      <Briefcase className="h-4 w-4 text-[#9A7B4F] shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Business Content</p>
-                        <p className="text-[#1C1C1C] font-semibold mt-0.5 leading-normal">{data.businessContent}</p>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Right Side: Vision Details */}
-              <div className="lg:col-span-8 flex flex-col justify-center gap-8">
-                <div className="flex flex-col gap-4">
-                  <span className="text-[10px] uppercase tracking-widest text-[#9A7B4F] font-bold">Future Outlook</span>
-                  <h2 className="font-serif text-3xl md:text-4xl text-[#1C1C1C] font-semibold tracking-wide">
-                    {data.visionTitle}
-                  </h2>
-                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed font-medium max-w-2xl">
-                    {data.visionText}
-                  </p>
+              {/* Right Side: Vision & Mission Details */}
+              <div className="lg:col-span-8 flex flex-col gap-12">
+                {/* Vision block */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center border-b border-[#EAEAEA] pb-12">
+                  <div className="md:col-span-8 flex flex-col gap-4">
+                    <span className="text-[10px] uppercase tracking-widest text-[#9A7B4F] font-bold">Future Outlook</span>
+                    <h2 className="font-serif text-3xl text-[#1C1C1C] font-semibold tracking-wide">
+                      {data.visionTitle}
+                    </h2>
+                    <p className="text-xs md:text-sm text-muted-foreground leading-relaxed font-medium">
+                      {data.visionText}
+                    </p>
+                  </div>
+                  <div className="md:col-span-4 flex items-center justify-center">
+                    <div className="bg-[#FAF9F6] border border-[#EAEAEA] rounded-full p-6 w-36 h-36 flex items-center justify-center">
+                      <Compass className="h-14 w-14 text-[#9A7B4F]" />
+                    </div>
+                  </div>
                 </div>
-                
-                {/* Graphics element */}
-                <div className="flex items-center gap-4 border border-[#EAEAEA] bg-[#FAF9F6] p-6 rounded max-w-xl">
-                  <Compass className="h-10 w-10 text-[#9A7B4F] shrink-0" />
-                  <div>
-                    <h4 className="text-xs font-semibold text-[#1C1C1C] uppercase tracking-wider">Guided Craftsmanship</h4>
-                    <p className="text-[10px] text-muted-foreground mt-1 font-medium">Navigating a course of ethical materials, standard pricing transparency, and bespoke design.</p>
+
+                {/* Mission block */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-2">
+                  <div className="md:col-span-4 overflow-hidden rounded border border-[#EAEAEA]">
+                    <img 
+                      src={data.missionImage} 
+                      alt="Our Mission" 
+                      className="w-full h-32 md:h-40 object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="md:col-span-8 flex flex-col gap-4">
+                    <span className="text-[10px] uppercase tracking-widest text-[#9A7B4F] font-bold">Our Philosophy</span>
+                    <h2 className="font-serif text-3xl text-[#1C1C1C] font-semibold tracking-wide">
+                      {data.missionTitle}
+                    </h2>
+                    <p className="text-xs md:text-sm text-muted-foreground leading-relaxed font-medium">
+                      {data.missionText}
+                    </p>
                   </div>
                 </div>
               </div>
 
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION 3: Mission */}
-        <section className="max-w-7xl mx-auto px-6 sm:px-12 py-16 lg:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="flex flex-col gap-6 order-2 lg:order-1">
-              <span className="text-[10px] uppercase tracking-widest text-[#9A7B4F] font-bold">Our Philosophy</span>
-              <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-[#1C1C1C] leading-tight font-semibold tracking-wide">
-                {data.missionTitle}
-              </h2>
-              <p className="text-xs md:text-sm text-muted-foreground leading-relaxed font-medium">
-                {data.missionText}
-              </p>
-            </div>
-            <div className="overflow-hidden rounded shadow-md border border-[#EAEAEA] bg-white order-1 lg:order-2">
-              <img 
-                src={data.missionImage} 
-                alt="Our Mission" 
-                className="w-full h-[320px] md:h-[400px] object-cover hover:scale-[1.02] transition-transform duration-500" 
-              />
             </div>
           </div>
         </section>
