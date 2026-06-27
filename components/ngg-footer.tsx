@@ -96,12 +96,12 @@ export function NggFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm text-background/70 transition-colors hover:text-background">
+                <Link href="/privacy-policy" className="text-sm text-background/70 transition-colors hover:text-background">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm text-background/70 transition-colors hover:text-background">
+                <Link href="/terms-conditions" className="text-sm text-background/70 transition-colors hover:text-background">
                   Terms and Conditions
                 </Link>
               </li>
@@ -153,10 +153,10 @@ export function NggFooter() {
             &copy; {new Date().getFullYear()} Next Generation Gold. All Rights Reserved.
           </p>
           <div className="flex gap-5 text-xs text-background/60">
-            <Link href="#" className="transition-colors hover:text-background">
+            <Link href="/privacy-policy" className="transition-colors hover:text-background">
               Privacy
             </Link>
-            <Link href="#" className="transition-colors hover:text-background">
+            <Link href="/terms-conditions" className="transition-colors hover:text-background">
               Terms
             </Link>
             <Link href="#" className="transition-colors hover:text-background">
