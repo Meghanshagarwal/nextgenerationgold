@@ -666,7 +666,7 @@ export function NggBuddyChatbot() {
                       <ChevronLeft className="h-3.5 w-3.5" />
                     </button>
 
-                    <div className="flex gap-3.5 overflow-x-auto py-3 px-1 scrollbar-none snap-x snap-mandatory scroll-smooth w-full">
+                    <div className="flex gap-3.5 overflow-x-auto py-3 px-1 no-scrollbar snap-x snap-mandatory scroll-smooth w-full">
                       {msg.products.map((p) => {
                         const isSelected = comparisonList.some(c => c.slug === p.slug)
                         return (
@@ -801,7 +801,7 @@ export function NggBuddyChatbot() {
           )}
 
           {/* Quick reply suggestion chips */}
-          {getSuggestions().length > 0 && (
+          {getSuggestions().length > 0 && messages.length === 1 && (
             <div className="px-4 py-2 flex flex-wrap gap-1.5 bg-[#FAF9F6] dark:bg-[#1A1A1A] border-t border-[#EAEAEA] dark:border-white/5">
               {getSuggestions().map((sug) => (
                 <button
