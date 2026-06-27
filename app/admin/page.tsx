@@ -881,18 +881,24 @@ function AdminPageContent() {
                       </div>
                     </div>
 
-                    {/* Vision Section */}
                     <div className="flex flex-col gap-5 mt-4">
                       <h3 className="text-xs uppercase tracking-widest text-[#9A7B4F] font-bold border-b border-[#FAF6F0] pb-2">2. Vision Statement</h3>
                       
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Vision Title</label>
-                        <input
-                          type="text"
-                          value={aboutUs.visionTitle || ""}
-                          onChange={(e) => setAboutUs({ ...aboutUs, visionTitle: e.target.value })}
-                          className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
-                          required
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Vision Title</label>
+                          <input
+                            type="text"
+                            value={aboutUs.visionTitle || ""}
+                            onChange={(e) => setAboutUs({ ...aboutUs, visionTitle: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                        <ImageUploader
+                          label="Vision Section Image"
+                          value={aboutUs.visionImage || ""}
+                          onSelect={(url) => setAboutUs({ ...aboutUs, visionImage: url })}
                         />
                       </div>
 

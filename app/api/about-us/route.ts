@@ -7,6 +7,7 @@ const defaults = {
   beginningImage: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80",
   visionTitle: "Our Vision",
   visionText: "Our vision is to become the leading global luxury jewelry brand that inspires confidence, creativity, and self-expression. We aim to make fine craftsmanship accessible, introducing designs that redefine modern elegance and creating stories that are passed down through generations.",
+  visionImage: "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=800&q=80",
   missionTitle: "Our Mission",
   missionText: "We deliver a seamless luxury experience that prioritizes absolute quality, style guidance, and detailed craftsmanship. NGG is dedicated to sourcing ethical, premium materials (from certified diamonds to conflict-free gemstones) to produce jewelry that evolves with you.",
   missionImage: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=80",

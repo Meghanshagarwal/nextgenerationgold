@@ -11,6 +11,7 @@ type AboutUsData = {
   beginningImage: string
   visionTitle: string
   visionText: string
+  visionImage: string
   missionTitle: string
   missionText: string
   missionImage: string
@@ -154,10 +155,12 @@ export default function AboutUsPage() {
                       {data.visionText}
                     </p>
                   </div>
-                  <div className="md:col-span-4 flex items-center justify-center">
-                    <div className="bg-[#FAF9F6] border border-[#EAEAEA] rounded-full p-6 w-36 h-36 flex items-center justify-center">
-                      <Compass className="h-14 w-14 text-[#9A7B4F]" />
-                    </div>
+                  <div className="md:col-span-4 overflow-hidden rounded border border-[#EAEAEA]">
+                    <img 
+                      src={data.visionImage || "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=800&q=80"} 
+                      alt="Our Vision" 
+                      className="w-full h-32 md:h-40 object-cover hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
                 </div>
 
