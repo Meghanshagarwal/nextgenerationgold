@@ -13,7 +13,9 @@ import {
   Sun, 
   Moon, 
   Info,
-  Scale
+  Scale,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -648,50 +650,82 @@ export function NggBuddyChatbot() {
 
                 {/* Dynamic Product Cards Carousel */}
                 {msg.type === "products" && msg.products && (
-                  <div className="w-[300px] sm:w-[350px] flex gap-3.5 overflow-x-auto py-3.5 px-1 scrollbar-none snap-x snap-mandatory">
-                    {msg.products.map((p) => {
-                      const isSelected = comparisonList.some(c => c.slug === p.slug)
-                      return (
-                        <div key={p.slug} className="w-[180px] flex-none bg-white dark:bg-[#242424] border border-[#EAEAEA] dark:border-white/5 rounded-xl overflow-hidden shadow-md snap-start flex flex-col justify-between group">
-                          <div>
-                            <div className="h-32 bg-[#F9F9F9] dark:bg-[#2A2A2A] flex items-center justify-center p-3 relative">
-                              <img src={p.image} alt={p.name} className="h-full object-contain group-hover:scale-105 transition-transform duration-300" />
-                              <button
-                                onClick={() => handleAddToCompare(p)}
-                                className={`absolute top-2 right-2 p-1.5 rounded-full border shadow-xs transition-all ${
-                                  isSelected 
-                                    ? "bg-[#9A7B4F] border-[#9A7B4F] text-white" 
-                                    : "bg-white dark:bg-[#333] border-border text-muted-foreground hover:text-[#9A7B4F]"
-                                }`}
-                                title="Add to compare"
+                  <div className="relative group/carousel w-[300px] sm:w-[350px] mt-2">
+                    {/* Left Scroll Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        const carousel = e.currentTarget.nextElementSibling;
+                        if (carousel) {
+                          carousel.scrollBy({ left: -190, behavior: 'smooth' });
+                        }
+                      }}
+                      className="absolute left-1 top-1/2 -translate-y-1/2 z-10 bg-white/95 dark:bg-[#333]/95 border border-border dark:border-white/10 p-1.5 rounded-full shadow-md text-muted-foreground hover:text-[#9A7B4F] active:scale-95 transition-all hover:scale-105"
+                      title="Scroll Left"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    </button>
+
+                    <div className="flex gap-3.5 overflow-x-auto py-3 px-1 scrollbar-none snap-x snap-mandatory scroll-smooth w-full">
+                      {msg.products.map((p) => {
+                        const isSelected = comparisonList.some(c => c.slug === p.slug)
+                        return (
+                          <div key={p.slug} className="w-[180px] flex-none bg-white dark:bg-[#242424] border border-[#EAEAEA] dark:border-white/5 rounded-xl overflow-hidden shadow-md snap-start flex flex-col justify-between group">
+                            <div>
+                              <div className="h-32 bg-[#F9F9F9] dark:bg-[#2A2A2A] flex items-center justify-center p-3 relative">
+                                <img src={p.image} alt={p.name} className="h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                                <button
+                                  onClick={() => handleAddToCompare(p)}
+                                  className={`absolute top-2 right-2 p-1.5 rounded-full border shadow-xs transition-all ${
+                                    isSelected 
+                                      ? "bg-[#9A7B4F] border-[#9A7B4F] text-white" 
+                                      : "bg-white dark:bg-[#333] border-border text-muted-foreground hover:text-[#9A7B4F]"
+                                  }`}
+                                  title="Add to compare"
+                                >
+                                  <Scale className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                              <div className="p-3">
+                                <h4 className="font-serif text-[11px] font-bold text-foreground line-clamp-1">{p.name}</h4>
+                                <p className="text-[10px] text-[#9A7B4F] font-bold mt-1">{p.price}</p>
+                                <p className="text-[9px] text-muted-foreground line-clamp-2 mt-1 leading-normal">{p.description}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="p-2 border-t border-[#F5F5F5] dark:border-white/5 flex gap-1 bg-[#FAF9F6] dark:bg-[#222]">
+                              <Link 
+                                href={`/product/${p.slug}`}
+                                className="flex-1 text-center py-1.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground border border-border bg-white dark:bg-[#333] rounded"
                               >
-                                <Scale className="h-3.5 w-3.5" />
+                                View
+                              </Link>
+                              <button
+                                onClick={() => triggerLeadForProduct(p.name)}
+                                className="flex-1 py-1.5 text-[9px] font-bold uppercase tracking-wider bg-[#9A7B4F] text-white hover:opacity-90 rounded"
+                              >
+                                Enquire
                               </button>
                             </div>
-                            <div className="p-3">
-                              <h4 className="font-serif text-[11px] font-bold text-foreground line-clamp-1">{p.name}</h4>
-                              <p className="text-[10px] text-[#9A7B4F] font-bold mt-1">{p.price}</p>
-                              <p className="text-[9px] text-muted-foreground line-clamp-2 mt-1 leading-normal">{p.description}</p>
-                            </div>
                           </div>
-                          
-                          <div className="p-2 border-t border-[#F5F5F5] dark:border-white/5 flex gap-1 bg-[#FAF9F6] dark:bg-[#222]">
-                            <Link 
-                              href={`/product/${p.slug}`}
-                              className="flex-1 text-center py-1.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground border border-border bg-white dark:bg-[#333] rounded"
-                            >
-                              View
-                            </Link>
-                            <button
-                              onClick={() => triggerLeadForProduct(p.name)}
-                              className="flex-1 py-1.5 text-[9px] font-bold uppercase tracking-wider bg-[#9A7B4F] text-white hover:opacity-90 rounded"
-                            >
-                              Enquire
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
+                    </div>
+
+                    {/* Right Scroll Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        const carousel = e.currentTarget.previousElementSibling;
+                        if (carousel) {
+                          carousel.scrollBy({ left: 190, behavior: 'smooth' });
+                        }
+                      }}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 z-10 bg-white/95 dark:bg-[#333]/95 border border-border dark:border-white/10 p-1.5 rounded-full shadow-md text-muted-foreground hover:text-[#9A7B4F] active:scale-95 transition-all hover:scale-105"
+                      title="Scroll Right"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 )}
 
@@ -768,12 +802,12 @@ export function NggBuddyChatbot() {
 
           {/* Quick reply suggestion chips */}
           {getSuggestions().length > 0 && (
-            <div className="px-4 py-2 flex gap-1.5 overflow-x-auto bg-[#FAF9F6] dark:bg-[#1A1A1A] border-t border-[#EAEAEA] dark:border-white/5 scrollbar-none">
+            <div className="px-4 py-2 flex flex-wrap gap-1.5 bg-[#FAF9F6] dark:bg-[#1A1A1A] border-t border-[#EAEAEA] dark:border-white/5">
               {getSuggestions().map((sug) => (
                 <button
                   key={sug}
                   onClick={() => handleSuggestClick(sug)}
-                  className="flex-none bg-white dark:bg-[#282828] border border-[#EAEAEA] dark:border-white/5 px-3 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:border-[#9A7B4F] hover:text-[#9A7B4F] transition-all"
+                  className="bg-white dark:bg-[#282828] border border-[#EAEAEA] dark:border-white/5 px-3 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:border-[#9A7B4F] hover:text-[#9A7B4F] transition-all"
                 >
                   {sug}
                 </button>
