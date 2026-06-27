@@ -74,3 +74,9 @@ VALUES
   ('Necklace', 'necklace'),
   ('Ring', 'ring')
 ON CONFLICT (name) DO NOTHING;
+
+-- 6. Add new columns to contacts table for chatbot leads
+ALTER TABLE contacts ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE contacts ADD COLUMN IF NOT EXISTS city TEXT;
+ALTER TABLE contacts ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'contact';
+

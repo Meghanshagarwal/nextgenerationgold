@@ -377,6 +377,9 @@ export type ContactSubmission = {
   message: string
   productInterest?: string
   createdAt: string
+  phone?: string
+  city?: string
+  type?: 'contact' | 'lead'
 }
 
 export async function readContacts(): Promise<ContactSubmission[]> {
@@ -404,6 +407,9 @@ export async function readContacts(): Promise<ContactSubmission[]> {
     message: row.message,
     productInterest: row.product_interest || undefined,
     createdAt: row.created_at,
+    phone: row.phone || undefined,
+    city: row.city || undefined,
+    type: row.type || 'contact'
   }))
 }
 
@@ -422,6 +428,9 @@ export async function writeContacts(contacts: ContactSubmission[]) {
     message: c.message,
     product_interest: c.productInterest || null,
     created_at: c.createdAt || new Date().toISOString(),
+    phone: c.phone || null,
+    city: c.city || null,
+    type: c.type || 'contact'
   }))
 
   const { error } = await supabase.from("contacts").upsert(items, { onConflict: "id" })

@@ -59,6 +59,44 @@ function AdminPageContent() {
   const [deletingProductSlug, setDeletingProductSlug] = useState<string | null>(null)
   const [selectedContact, setSelectedContact] = useState<ContactSubmission | null>(null)
 
+  // Inquiries filter & export states
+  const [inquiryTypeFilter, setInquiryTypeFilter] = useState<"all" | "contact" | "lead">("all")
+
+  const exportLeadsToCSV = () => {
+    const leads = contacts.filter(c => c.type === "lead")
+    if (leads.length === 0) {
+      alert("No chatbot leads available to export.")
+      return
+    }
+    
+    const headers = ["ID", "Name", "Email", "Phone", "City", "Product Interest", "Requirements", "Created At"]
+    const rows = leads.map(l => [
+      l.id,
+      l.name,
+      l.email,
+      l.phone || "",
+      l.city || "",
+      l.productInterest || "",
+      (l.message || "").replace(/\n/g, " ").replace(/"/g, '""'),
+      new Date(l.createdAt).toLocaleString()
+    ])
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.map(val => `"${val}"`).join(","))
+    ].join("\n")
+    
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", `ngg_leads_${new Date().toISOString().split("T")[0]}.csv`)
+    link.style.visibility = "hidden"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   // Sync with search parameter tab on load
   useEffect(() => {
     if (tabParam && ["overview", "products", "categories_tags", "contacts"].includes(tabParam)) {
@@ -592,51 +630,154 @@ function AdminPageContent() {
               )}
 
               {/* ========== CONTACT INBOX TAB ========== */}
-              {activeTab === "contacts" && (
-                <div className="flex flex-col gap-8">
-                  <div>
-                    <h2 className="font-serif text-3xl text-[#1C1C1C] tracking-wide">Inquiries Inbox</h2>
-                    <p className="text-xs text-muted-foreground mt-1 font-medium">Read contact messages and consultant request forms submitted by clients.</p>
-                  </div>
+              {activeTab === "contacts" && (() => {
+                const totalLeads = contacts.filter(c => c.type === "lead").length
+                const totalGeneral = contacts.filter(c => c.type !== "lead").length
+                
+                const interestCounts: Record<string, number> = {}
+                contacts.forEach(c => {
+                  if (c.productInterest) {
+                    interestCounts[c.productInterest] = (interestCounts[c.productInterest] || 0) + 1
+                  }
+                })
+                const mostPopularInterest = Object.entries(interestCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "None"
 
-                  {contacts.length === 0 ? (
-                    <div className="border border-[#EAEAEA] bg-white p-12 text-center rounded shadow-xs">
-                      <Mail className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-40" strokeWidth={1.5} />
-                      <p className="text-sm text-muted-foreground font-medium">No client messages have been received yet.</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {contacts.map((c) => (
-                        <div 
-                          key={c.id} 
-                          onClick={() => setSelectedContact(c)}
-                          className="border border-[#EAEAEA] bg-white p-6 rounded hover:border-[#9A7B4F] transition-all cursor-pointer flex flex-col justify-between group shadow-xs hover:shadow-md"
+                const filteredList = contacts.filter(c => {
+                  if (inquiryTypeFilter === "contact") return c.type !== "lead"
+                  if (inquiryTypeFilter === "lead") return c.type === "lead"
+                  return true
+                })
+
+                return (
+                  <div className="flex flex-col gap-8 animate-in fade-in duration-300">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h2 className="font-serif text-3xl text-[#1C1C1C] tracking-wide">Inquiries & Leads Inbox</h2>
+                        <p className="text-xs text-muted-foreground mt-1 font-medium">Manage consultant request leads from NGG Buddy and standard contact form inquiries.</p>
+                      </div>
+                      {totalLeads > 0 && (
+                        <button
+                          onClick={exportLeadsToCSV}
+                          className="border border-[#9A7B4F] text-[#9A7B4F] hover:bg-[#FAF6F0] bg-white px-5 py-2.5 text-xs font-semibold uppercase tracking-widest transition-all rounded shadow-xs"
                         >
-                          <div>
-                            <div className="flex items-center justify-between mb-4 text-xs font-semibold text-muted-foreground">
-                              <span className="font-mono bg-[#F9F9F9] px-2 py-0.5 rounded border border-[#EAEAEA]">#{c.id}</span>
-                              <span>
-                                {new Date(c.createdAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                            <h4 className="text-sm font-semibold text-[#1C1C1C] group-hover:text-[#9A7B4F] transition-colors">{c.name}</h4>
-                            <p className="text-xs text-muted-foreground mt-0.5 truncate font-medium">{c.email}</p>
-                            <p className="text-xs font-bold text-[#1C1C1C] mt-4 uppercase tracking-wider border-l-2 border-[#9A7B4F] pl-2 truncate">{c.subject}</p>
-                            <p className="text-xs text-muted-foreground mt-2 line-clamp-3 leading-relaxed font-medium">{c.message}</p>
-                          </div>
-                          
-                          {c.productInterest && (
-                            <div className="mt-5 pt-3 border-t border-[#F5F5F5] flex items-center justify-between text-[10px] font-semibold">
-                              <span className="uppercase tracking-widest text-muted-foreground">Interest:</span>
-                              <span className="font-serif text-[#9A7B4F] truncate max-w-[150px] font-bold">{c.productInterest}</span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                          Export Leads CSV
+                        </button>
+                      )}
                     </div>
-                  )}
-                </div>
-              )}
+
+                    {/* Analytics Summary */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="border border-[#FAF6F0] bg-[#FAF9F6] p-5 rounded flex items-center justify-between shadow-2xs">
+                        <div>
+                          <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">General Inquiries</p>
+                          <h4 className="font-serif text-2xl text-[#1C1C1C] font-semibold mt-1">{totalGeneral}</h4>
+                        </div>
+                        <span className="text-[10px] bg-white border border-[#EAEAEA] text-muted-foreground px-2.5 py-1 rounded font-semibold uppercase">Standard</span>
+                      </div>
+                      
+                      <div className="border border-[#FAF6F0] bg-[#FAF9F6] p-5 rounded flex items-center justify-between shadow-2xs">
+                        <div>
+                          <p className="text-[9px] uppercase tracking-widest text-[#9A7B4F] font-bold">Chatbot Leads</p>
+                          <h4 className="font-serif text-2xl text-[#9A7B4F] font-semibold mt-1">{totalLeads}</h4>
+                        </div>
+                        <span className="text-[10px] bg-[#9A7B4F] text-white px-2.5 py-1 rounded font-semibold uppercase">NGG Buddy</span>
+                      </div>
+
+                      <div className="border border-[#FAF6F0] bg-[#FAF9F6] p-5 rounded flex items-center justify-between shadow-2xs">
+                        <div>
+                          <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Popular Product Interest</p>
+                          <h4 className="font-serif text-sm text-[#1C1C1C] font-bold mt-2.5 truncate max-w-[200px]">{mostPopularInterest}</h4>
+                        </div>
+                        <span className="text-[10px] bg-white border border-[#EAEAEA] text-muted-foreground px-2.5 py-1 rounded font-semibold uppercase">Enquiry Focus</span>
+                      </div>
+                    </div>
+
+                    {/* Filter controls */}
+                    <div className="flex gap-2 border-b border-[#EAEAEA] pb-4">
+                      <button
+                        onClick={() => setInquiryTypeFilter("all")}
+                        className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all rounded ${
+                          inquiryTypeFilter === "all"
+                            ? "bg-[#9A7B4F] text-white"
+                            : "text-muted-foreground hover:bg-[#F9F9F9] hover:text-[#1C1C1C]"
+                        }`}
+                      >
+                        All ({contacts.length})
+                      </button>
+                      <button
+                        onClick={() => setInquiryTypeFilter("contact")}
+                        className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all rounded ${
+                          inquiryTypeFilter === "contact"
+                            ? "bg-[#9A7B4F] text-white"
+                            : "text-muted-foreground hover:bg-[#F9F9F9] hover:text-[#1C1C1C]"
+                        }`}
+                      >
+                        Inquiries ({totalGeneral})
+                      </button>
+                      <button
+                        onClick={() => setInquiryTypeFilter("lead")}
+                        className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all rounded ${
+                          inquiryTypeFilter === "lead"
+                            ? "bg-[#9A7B4F] text-white"
+                            : "text-muted-foreground hover:bg-[#F9F9F9] hover:text-[#1C1C1C]"
+                        }`}
+                      >
+                        Buddy Leads ({totalLeads})
+                      </button>
+                    </div>
+
+                    {filteredList.length === 0 ? (
+                      <div className="border border-[#EAEAEA] bg-white p-12 text-center rounded shadow-xs">
+                        <Mail className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-40" strokeWidth={1.5} />
+                        <p className="text-sm text-muted-foreground font-medium">No inbox messages match the active filters.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredList.map((c) => (
+                          <div 
+                            key={c.id} 
+                            onClick={() => setSelectedContact(c)}
+                            className="border border-[#EAEAEA] bg-white p-6 rounded hover:border-[#9A7B4F] transition-all cursor-pointer flex flex-col justify-between group shadow-xs hover:shadow-md"
+                          >
+                            <div>
+                              <div className="flex items-center justify-between mb-4 text-[10px] font-semibold text-muted-foreground">
+                                <span className="font-mono bg-[#F9F9F9] px-2 py-0.5 rounded border border-[#EAEAEA]">#{c.id}</span>
+                                <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex justify-between items-start gap-2 mb-2">
+                                <h4 className="text-sm font-semibold text-[#1C1C1C] group-hover:text-[#9A7B4F] transition-colors">{c.name}</h4>
+                                {c.type === "lead" ? (
+                                  <span className="text-[8px] uppercase tracking-widest font-extrabold bg-[#FAF6F0] border border-[#EBE3D5] text-[#9A7B4F] px-2 py-0.5 rounded flex-none">Buddy Lead</span>
+                                ) : (
+                                  <span className="text-[8px] uppercase tracking-widest font-extrabold bg-gray-50 border border-gray-150 text-gray-400 px-2 py-0.5 rounded flex-none">Inquiry</span>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate font-medium">{c.email}</p>
+                              
+                              {c.phone && (
+                                <p className="text-[11px] text-muted-foreground mt-2 font-mono font-medium">Phone: <span className="text-[#1C1C1C] font-semibold">{c.phone}</span></p>
+                              )}
+                              {c.city && (
+                                <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">City: <span className="text-[#1C1C1C] font-semibold">{c.city}</span></p>
+                              )}
+
+                              <p className="text-xs font-bold text-[#1C1C1C] mt-4 uppercase tracking-wider border-l-2 border-[#9A7B4F] pl-2 truncate">{c.subject}</p>
+                              <p className="text-xs text-muted-foreground mt-2 line-clamp-3 leading-relaxed font-medium">{c.message}</p>
+                            </div>
+                            
+                            {c.productInterest && (
+                              <div className="mt-5 pt-3 border-t border-[#F5F5F5] flex items-center justify-between text-[10px] font-semibold">
+                                <span className="uppercase tracking-widest text-muted-foreground">Interest:</span>
+                                <span className="font-serif text-[#9A7B4F] truncate max-w-[150px] font-bold">{c.productInterest}</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
             </>
           )}
         </section>
@@ -703,6 +844,20 @@ function AdminPageContent() {
                     <a href={`mailto:${selectedContact.email}`} className="hover:underline">{selectedContact.email}</a>
                   </p>
                 </div>
+
+                {selectedContact.phone && (
+                  <div>
+                    <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Phone Number</span>
+                    <p className="text-[#1C1C1C] font-semibold mt-1 font-mono">{selectedContact.phone}</p>
+                  </div>
+                )}
+
+                {selectedContact.city && (
+                  <div>
+                    <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Delivery City</span>
+                    <p className="text-[#1C1C1C] font-semibold mt-1">{selectedContact.city}</p>
+                  </div>
+                )}
 
                 {selectedContact.productInterest && (
                   <div>

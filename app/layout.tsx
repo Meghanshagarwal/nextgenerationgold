@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Cormorant_Garamond } from 'next/font/google'
 import './globals.css'
+import { NggBuddyChatbot } from '@/components/ngg-buddy-chatbot'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({
@@ -48,6 +49,7 @@ export default function RootLayout({
     >
       <body className="font-sans antialiased">
         {children}
+        <NggBuddyChatbot />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

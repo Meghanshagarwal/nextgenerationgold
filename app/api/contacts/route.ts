@@ -22,7 +22,10 @@ export async function POST(req: Request) {
       subject: body.subject || "Product Inquiry",
       message: body.message,
       productInterest: body.productInterest || "",
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      phone: body.phone || undefined,
+      city: body.city || undefined,
+      type: body.type || 'contact'
     }
 
     contacts.unshift(newSubmission) // Add to top of the list
