@@ -349,22 +349,6 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* Product specs row */}
-            <div className="border-t border-border px-6 py-10 md:px-12 lg:px-16">
-              <div className="mx-auto max-w-2xl">
-                <ul className="flex flex-wrap gap-x-12 gap-y-4">
-                  {product.details.map((detail, i) => (
-                    <li
-                      key={i}
-                      className="flex items-center gap-2.5 text-sm text-foreground"
-                    >
-                      <span className="h-1 w-1 flex-none rounded-full bg-foreground" />
-                      {detail}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
 
             {/* Product Specifications */}
             <div className="border-t border-border px-6 py-10 md:px-12 lg:px-16">
