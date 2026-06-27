@@ -358,7 +358,7 @@ export default function CategoryPage() {
             <ChevronDown className="absolute right-4 top-4.5 h-3.5 w-3.5 text-foreground pointer-events-none" />
           </div>
 
-          {/* Center Column: Title & Count & Personalize */}
+          {/* Center Column: Title & Count */}
           <div className="flex items-center gap-8 justify-center flex-1">
             <span className="hidden lg:inline text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
               {processedProducts.length} {processedProducts.length === 1 ? "Product" : "Products"}
@@ -366,13 +366,6 @@ export default function CategoryPage() {
             <h2 className="font-serif text-xl md:text-2xl lg:text-3xl text-foreground tracking-wide text-center uppercase min-w-[120px] select-none">
               {slug === "high-jewelry" ? (highJewelrySettings?.title || "High Jewelry") : categoryTitle}
             </h2>
-            <label className="hidden lg:flex items-center gap-2 cursor-pointer select-none text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
-              <input 
-                type="checkbox"
-                className="h-3.5 w-3.5 border-border accent-foreground rounded focus:ring-0 cursor-pointer"
-              />
-              <span>Personalize</span>
-            </label>
           </div>
 
           {/* Right Column: Filters */}
