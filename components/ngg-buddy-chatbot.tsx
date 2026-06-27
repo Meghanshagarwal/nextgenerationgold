@@ -16,6 +16,7 @@ import {
   Scale
 } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Product } from "@/lib/products"
 
 type Message = {
@@ -72,6 +73,13 @@ export function NggBuddyChatbot() {
   // Comparison State
   const [comparisonList, setComparisonList] = useState<Product[]>([])
   const [showComparison, setShowComparison] = useState(false)
+
+  const pathname = usePathname()
+
+  // Hide on admin pages
+  if (pathname?.startsWith("/admin")) {
+    return null
+  }
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -575,7 +583,7 @@ export function NggBuddyChatbot() {
 
       {/* Chat Container */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-full max-w-[420px] h-[600px] flex flex-col rounded-2xl border border-white/30 bg-white/80 dark:bg-[#121212]/90 dark:border-white/10 shadow-2xl backdrop-blur-md overflow-hidden transition-all duration-500 scale-100 origin-bottom-right">
+        <div className="fixed bottom-6 right-6 z-50 w-[90vw] sm:w-[420px] h-[600px] max-h-[calc(100vh-100px)] flex flex-col rounded-2xl border border-white/30 bg-white/80 dark:bg-[#121212]/90 dark:border-white/10 shadow-2xl backdrop-blur-md overflow-hidden transition-all duration-500 scale-100 origin-bottom-right">
           {/* Header */}
           <div className="bg-gradient-to-r from-[#9A7B4F] to-[#B89766] px-5 py-4 text-white flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-3">
