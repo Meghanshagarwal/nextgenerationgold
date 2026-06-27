@@ -33,6 +33,9 @@ export default function CategoryPage() {
   // Filters State
   const [selectedCollections, setSelectedCollections] = useState<string[]>([])
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedOccasions, setSelectedOccasions] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<string>("featured")
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
@@ -151,10 +154,11 @@ export default function CategoryPage() {
 
   // Get filter options based on current category products
   const filterOptions = useMemo(() => {
-    const collections = Array.from(new Set(categoryProducts.map(p => p.collection)))
+    const collections = Array.from(new Set(categoryProducts.map(p => p.collection).filter(Boolean)))
     
     // Normalize materials for filtering (e.g. Yellow Gold, Rose Gold)
     const rawMaterials = categoryProducts.map(p => {
+      if (!p.material) return ""
       if (p.material.toLowerCase().includes("yellow")) return "Yellow Gold"
       if (p.material.toLowerCase().includes("rose")) return "Rose Gold"
       if (p.material.toLowerCase().includes("white")) return "White Gold"
@@ -164,7 +168,31 @@ export default function CategoryPage() {
     })
     const materials = Array.from(new Set(rawMaterials)).filter(Boolean)
 
-    return { collections, materials }
+    // Dynamic Categories
+    const categories = Array.from(new Set(categoryProducts.map(p => p.category).filter(Boolean)))
+
+    // Dynamic Tags
+    const tagsSet = new Set<string>()
+    categoryProducts.forEach(p => {
+      if (Array.isArray(p.tags)) {
+        p.tags.forEach(t => tagsSet.add(t))
+      }
+    })
+    const tags = Array.from(tagsSet)
+
+    // Dynamic Occasions
+    const occasionsSet = new Set<string>()
+    categoryProducts.forEach(p => {
+      if (p.occasions) {
+        p.occasions.split(",").forEach(occ => {
+          const trimmed = occ.trim()
+          if (trimmed) occasionsSet.add(trimmed)
+        })
+      }
+    })
+    const occasions = Array.from(occasionsSet)
+
+    return { collections, materials, categories, tags, occasions }
   }, [categoryProducts])
 
   // Apply filters and sorting
@@ -195,7 +223,26 @@ export default function CategoryPage() {
       })
     }
 
-    // 3. Sorting
+    // 3. Category Filter
+    if (selectedCategories.length > 0) {
+      result = result.filter(p => p.category && selectedCategories.includes(p.category))
+    }
+
+    // 4. Tag Filter
+    if (selectedTags.length > 0) {
+      result = result.filter(p => p.tags && p.tags.some(t => selectedTags.includes(t)))
+    }
+
+    // 5. Occasion Filter
+    if (selectedOccasions.length > 0) {
+      result = result.filter(p => {
+        if (!p.occasions) return false
+        const itemOccasions = p.occasions.split(",").map(o => o.trim())
+        return selectedOccasions.some(o => itemOccasions.includes(o))
+      })
+    }
+
+    // 6. Sorting
     if (sortBy === "price-asc") {
       result.sort((a, b) => {
         const pA = parseFloat(a.price.replace(/[^0-9.]/g, ""))
@@ -211,7 +258,7 @@ export default function CategoryPage() {
     }
 
     return result
-  }, [categoryProducts, selectedCollections, selectedMaterials, sortBy])
+  }, [categoryProducts, selectedSubCategory, selectedCollections, selectedMaterials, selectedCategories, selectedTags, selectedOccasions, sortBy])
 
   // Toggle Filters
   const handleCollectionToggle = (col: string) => {
@@ -226,9 +273,30 @@ export default function CategoryPage() {
     )
   }
 
+  const handleCategoryToggle = (cat: string) => {
+    setSelectedCategories(prev => 
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    )
+  }
+
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    )
+  }
+
+  const handleOccasionToggle = (occ: string) => {
+    setSelectedOccasions(prev => 
+      prev.includes(occ) ? prev.filter(o => o !== occ) : [...prev, occ]
+    )
+  }
+
   const clearAllFilters = () => {
     setSelectedCollections([])
     setSelectedMaterials([])
+    setSelectedCategories([])
+    setSelectedTags([])
+    setSelectedOccasions([])
     setSortBy("featured")
   }
 
@@ -478,6 +546,66 @@ export default function CategoryPage() {
                           className="h-4 w-4 border-border accent-foreground rounded focus:ring-0"
                         />
                         <span className="text-muted-foreground hover:text-foreground transition-colors">{mat}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Category Section */}
+              {filterOptions.categories.length > 1 && (
+                <div className="flex flex-col gap-4">
+                  <h4 className="text-xs uppercase tracking-widest font-bold text-foreground">Category</h4>
+                  <div className="flex flex-col gap-3">
+                    {filterOptions.categories.map((cat) => (
+                      <label key={cat} className="flex items-center gap-3 text-sm cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={selectedCategories.includes(cat)}
+                          onChange={() => handleCategoryToggle(cat)}
+                          className="h-4 w-4 border-border accent-foreground rounded focus:ring-0"
+                        />
+                        <span className="text-muted-foreground hover:text-foreground transition-colors">{cat}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tag Section */}
+              {filterOptions.tags.length > 1 && (
+                <div className="flex flex-col gap-4">
+                  <h4 className="text-xs uppercase tracking-widest font-bold text-foreground">Tags</h4>
+                  <div className="flex flex-col gap-3">
+                    {filterOptions.tags.map((tag) => (
+                      <label key={tag} className="flex items-center gap-3 text-sm cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={selectedTags.includes(tag)}
+                          onChange={() => handleTagToggle(tag)}
+                          className="h-4 w-4 border-border accent-foreground rounded focus:ring-0"
+                        />
+                        <span className="text-muted-foreground hover:text-foreground transition-colors">{tag}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Occasion Section */}
+              {filterOptions.occasions.length > 0 && (
+                <div className="flex flex-col gap-4">
+                  <h4 className="text-xs uppercase tracking-widest font-bold text-foreground">Occasion</h4>
+                  <div className="flex flex-col gap-3">
+                    {filterOptions.occasions.map((occ) => (
+                      <label key={occ} className="flex items-center gap-3 text-sm cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={selectedOccasions.includes(occ)}
+                          onChange={() => handleOccasionToggle(occ)}
+                          className="h-4 w-4 border-border accent-foreground rounded focus:ring-0"
+                        />
+                        <span className="text-muted-foreground hover:text-foreground transition-colors">{occ}</span>
                       </label>
                     ))}
                   </div>
