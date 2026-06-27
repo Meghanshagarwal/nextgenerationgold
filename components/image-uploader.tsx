@@ -102,6 +102,30 @@ export function ImageUploader({ value, onSelect, label = "Image", required = fal
     if (file) handleUploadFile(file)
   }
 
+  const handleDeleteImage = async (id: number) => {
+    if (!window.confirm("Are you sure you want to permanently delete this image from your Media Library? This action cannot be undone.")) {
+      return
+    }
+    
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/media?id=${id}`, {
+        method: "DELETE"
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.error || "Failed to delete image")
+      } else {
+        setSelected(null)
+        fetchImages(page, search)
+      }
+    } catch (e: any) {
+      alert("Failed to delete image due to a network issue.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleConfirm = () => {
     if (selected) {
       onSelect(selected.url)
@@ -298,10 +322,17 @@ export function ImageUploader({ value, onSelect, label = "Image", required = fal
                     {selected ? (
                       <div className="flex items-center gap-3">
                         <img src={selected.thumbnail} alt="" className="h-10 w-10 object-cover rounded border border-[#EAEAEA]" />
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="text-xs font-semibold text-[#1C1C1C] truncate">{selected.title}</p>
                           <p className="text-[10px] text-muted-foreground truncate">{selected.url}</p>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteImage(selected.id)}
+                          className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider rounded transition-colors shrink-0"
+                        >
+                          Delete
+                        </button>
                       </div>
                     ) : (
                       <p className="text-xs text-muted-foreground">Click an image to select it</p>

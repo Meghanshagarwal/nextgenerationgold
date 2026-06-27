@@ -124,3 +124,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
+
+// DELETE /api/media?id=123
+export async function DELETE(req: Request) {
+  if (!WP_URL || !WP_USER || !WP_PASS) {
+    return NextResponse.json({ error: "WordPress credentials not configured" }, { status: 503 })
+  }
+
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get("id")
+
+  if (!id) {
+    return NextResponse.json({ error: "Media ID is required" }, { status: 400 })
+  }
+
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/wp/v2/media/${id}?force=true`, {
+      method: "DELETE",
+      headers: { Authorization: getAuthHeader() }
+    })
+
+    if (!res.ok) {
+      const err = await res.json()
+      return NextResponse.json({ error: err.message || "Failed to delete media from WordPress" }, { status: res.status })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (e: any) {
+    console.error("[media DELETE] Error:", e)
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
+}
