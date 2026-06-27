@@ -358,11 +358,8 @@ export default function CategoryPage() {
             <ChevronDown className="absolute right-4 top-4.5 h-3.5 w-3.5 text-foreground pointer-events-none" />
           </div>
 
-          {/* Center Column: Title & Count */}
-          <div className="flex items-center gap-8 justify-center flex-1">
-            <span className="hidden lg:inline text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
-              {processedProducts.length} {processedProducts.length === 1 ? "Product" : "Products"}
-            </span>
+          {/* Center Column: Title */}
+          <div className="flex items-center justify-center flex-1">
             <h2 className="font-serif text-xl md:text-2xl lg:text-3xl text-foreground tracking-wide text-center uppercase min-w-[120px] select-none">
               {slug === "high-jewelry" ? (highJewelrySettings?.title || "High Jewelry") : categoryTitle}
             </h2>
