@@ -59,6 +59,7 @@ export function NggBuddyChatbot() {
   const [isTyping, setIsTyping] = useState(false)
   const [context, setContext] = useState<ChatContext>(initialContext)
   const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [initialSuggestions, setInitialSuggestions] = useState<string[]>([])
   const [isDarkMode, setIsDarkMode] = useState(false)
   
   // Lead Capture State
@@ -99,6 +100,65 @@ export function NggBuddyChatbot() {
     }
     fetchProducts()
   }, [])
+
+  // Generate dynamic randomized suggestions when products are loaded
+  useEffect(() => {
+    if (allProducts.length > 0) {
+      // 1. Get unique categories
+      const categories = Array.from(new Set(allProducts.map(p => p.category).filter(Boolean)))
+      // 2. Get unique tags
+      const tagsSet = new Set<string>()
+      allProducts.forEach(p => {
+        if (Array.isArray(p.tags)) {
+          p.tags.forEach(t => tagsSet.add(t))
+        }
+      })
+      const tags = Array.from(tagsSet)
+      // 3. Get unique occasions
+      const occasionsSet = new Set<string>()
+      allProducts.forEach(p => {
+        if (p.occasions) {
+          p.occasions.split(",").forEach(occ => {
+            const trimmed = occ.trim()
+            if (trimmed) occasionsSet.add(trimmed)
+          })
+        }
+      })
+      const occasions = Array.from(occasionsSet)
+
+      // Generate pool of suggestion prompts
+      const pool: string[] = []
+      
+      categories.forEach(cat => {
+        const formatted = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()
+        pool.push(`Show ${formatted}s`)
+        pool.push(`${formatted} designs`)
+      })
+
+      occasions.forEach(occ => {
+        const formatted = occ.charAt(0).toUpperCase() + occ.slice(1).toLowerCase()
+        pool.push(`Gift for ${formatted}`)
+        pool.push(`${formatted} jewellery`)
+      })
+
+      tags.forEach(tag => {
+        const formatted = tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
+        pool.push(`${formatted} style`)
+        pool.push(`Minimal ${formatted}`)
+      })
+
+      // Fallbacks in case pool is small
+      const fallbacks = ["Show Rings", "Gift for Anniversary", "Diamond Necklace", "Minimal Daily Wear", "Gold Bracelets"]
+      fallbacks.forEach(f => pool.push(f))
+
+      // Remove duplicates and pick 4 random items
+      const uniquePool = Array.from(new Set(pool))
+      
+      // Shuffle helper
+      const shuffled = [...uniquePool].sort(() => 0.5 - Math.random())
+      setInitialSuggestions(shuffled.slice(0, 4))
+    }
+  }, [allProducts])
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -555,13 +615,60 @@ export function NggBuddyChatbot() {
     ])
     setLeadStep(0)
     setComparisonList([])
+
+    // Re-generate list and reshuffle suggestions
+    if (allProducts.length > 0) {
+      const categories = Array.from(new Set(allProducts.map(p => p.category).filter(Boolean)))
+      const tagsSet = new Set<string>()
+      allProducts.forEach(p => {
+        if (Array.isArray(p.tags)) {
+          p.tags.forEach(t => tagsSet.add(t))
+        }
+      })
+      const tags = Array.from(tagsSet)
+      const occasionsSet = new Set<string>()
+      allProducts.forEach(p => {
+        if (p.occasions) {
+          p.occasions.split(",").forEach(occ => {
+            const trimmed = occ.trim()
+            if (trimmed) occasionsSet.add(trimmed)
+          })
+        }
+      })
+      const occasions = Array.from(occasionsSet)
+
+      const pool: string[] = []
+      categories.forEach(cat => {
+        const formatted = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()
+        pool.push(`Show ${formatted}s`)
+        pool.push(`${formatted} designs`)
+      })
+      occasions.forEach(occ => {
+        const formatted = occ.charAt(0).toUpperCase() + occ.slice(1).toLowerCase()
+        pool.push(`Gift for ${formatted}`)
+        pool.push(`${formatted} jewellery`)
+      })
+      tags.forEach(tag => {
+        const formatted = tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
+        pool.push(`${formatted} style`)
+        pool.push(`Minimal ${formatted}`)
+      })
+      const fallbacks = ["Show Rings", "Gift for Anniversary", "Diamond Necklace", "Minimal Daily Wear", "Gold Bracelets"]
+      fallbacks.forEach(f => pool.push(f))
+
+      const uniquePool = Array.from(new Set(pool))
+      const shuffled = [...uniquePool].sort(() => 0.5 - Math.random())
+      setInitialSuggestions(shuffled.slice(0, 4))
+    }
   }
 
   // Dynamic Suggestion Chips
   const getSuggestions = () => {
     if (leadStep > 0) return []
     if (context.category === "") {
-      return ["Show Rings", "Gift for Anniversary", "Diamond Necklace", "Minimal Daily Wear"]
+      return initialSuggestions.length > 0 
+        ? initialSuggestions 
+        : ["Show Rings", "Gift for Anniversary", "Diamond Necklace", "Minimal Daily Wear"]
     }
     if (context.maxPrice === null) {
       return ["Under ₹50,000", "Under ₹1,00,000", "Show only Platinum", "Exclude Silver"]
