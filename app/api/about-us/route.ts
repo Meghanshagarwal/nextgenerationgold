@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server"
-import fs from "fs"
-import path from "path"
-
-const ABOUT_FILE = path.join(process.cwd(), "lib", "about-us.json")
+import { createClient } from "@supabase/supabase-js"
 
 const defaults = {
   beginningTitle: "The beginning of Next Generation Gold",
@@ -22,52 +19,60 @@ const defaults = {
   businessContent: "Luxury jewelry design, custom manufacturing, retail sales, and gemstone appraisal services."
 }
 
-function readAboutUs() {
-  try {
-    if (fs.existsSync(ABOUT_FILE)) {
-      return JSON.parse(fs.readFileSync(ABOUT_FILE, "utf-8"))
-    }
-  } catch (e) {
-    console.error("Error reading local about-us:", e)
-  }
-  // Write default settings first time
-  writeAboutUs(defaults)
-  return defaults
-}
-
-function writeAboutUs(data: any) {
-  try {
-    fs.writeFileSync(ABOUT_FILE, JSON.stringify(data, null, 2), "utf-8")
-    return true
-  } catch (e) {
-    console.error("Error writing local about-us:", e)
-    return false
-  }
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return null
+  return createClient(url, key)
 }
 
 export async function GET() {
-  const data = readAboutUs()
-  return NextResponse.json(data)
+  const supabase = getSupabase()
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "about_us")
+        .single()
+
+      if (!error && data?.value) {
+        return NextResponse.json({ ...defaults, ...data.value })
+      }
+    } catch (e) {
+      console.warn("Supabase read about_us failed, using defaults", e)
+    }
+  }
+
+  // Fallback: return defaults (no filesystem on Vercel)
+  return NextResponse.json(defaults)
 }
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const current = readAboutUs()
-    
-    // Merge new values
-    const updated = {
-      ...current,
-      ...body
+    const merged = { ...defaults, ...body }
+
+    const supabase = getSupabase()
+    if (!supabase) {
+      // No Supabase configured – just return the merged value so the UI doesn't break
+      return NextResponse.json(merged)
     }
-    
-    const success = writeAboutUs(updated)
-    if (!success) {
-      return NextResponse.json({ error: "Failed to write settings" }, { status: 500 })
+
+    // Upsert into site_settings table
+    const { error } = await supabase
+      .from("site_settings")
+      .upsert({ key: "about_us", value: merged }, { onConflict: "key" })
+
+    if (error) {
+      console.error("Supabase upsert about_us failed:", error)
+      return NextResponse.json({ error: "Failed to save settings: " + error.message }, { status: 500 })
     }
-    
-    return NextResponse.json(updated)
-  } catch (error) {
+
+    return NextResponse.json(merged)
+  } catch (error: any) {
+    console.error("POST /api/about-us error:", error)
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
   }
 }
