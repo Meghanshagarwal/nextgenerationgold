@@ -277,20 +277,25 @@ export async function readProducts(): Promise<Product[]> {
     return readProductsLocal()
   }
 
-  // Trigger seeding check
-  await seedProductsIfNeeded()
+  try {
+    // Trigger seeding check
+    await seedProductsIfNeeded()
 
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .order("created_at", { ascending: true })
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: true })
 
-  if (error) {
-    console.error("Error reading products from Supabase:", error)
-    return defaultProducts
+    if (error) {
+      console.warn("Supabase readProducts failed. Falling back to local storage.", error.message)
+      return readProductsLocal()
+    }
+
+    return (data || []).map(mapRowToProduct)
+  } catch (e: any) {
+    console.warn("Supabase readProducts threw error. Falling back to local storage.", e)
+    return readProductsLocal()
   }
-
-  return (data || []).map(mapRowToProduct)
 }
 
 export async function writeProducts(products: Product[]) {
@@ -300,12 +305,16 @@ export async function writeProducts(products: Product[]) {
     return
   }
 
-  const items = products.map(mapProductToRow)
-
-  const { error } = await supabase.from("products").upsert(items, { onConflict: "slug" })
-
-  if (error) {
-    console.error("Error writing products to Supabase:", error)
+  try {
+    const items = products.map(mapProductToRow)
+    const { error } = await supabase.from("products").upsert(items, { onConflict: "slug" })
+    if (error) {
+      console.warn("Supabase writeProducts failed. Falling back to local storage.", error.message)
+      writeProductsLocal(products)
+    }
+  } catch (e: any) {
+    console.warn("Supabase writeProducts threw error. Falling back to local storage.", e)
+    writeProductsLocal(products)
   }
 }
 
@@ -327,23 +336,29 @@ export async function readCategories(): Promise<Category[]> {
     return readCategoriesLocal()
   }
 
-  const { data, error } = await supabase
-    .from("categories")
-    .select("*")
-    .order("name", { ascending: true })
+  try {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .order("name", { ascending: true })
 
-  if (error) {
-    console.error("Error reading categories from Supabase:", error)
-    return []
+    if (error) {
+      console.warn("Supabase readCategories failed. Falling back to local storage.", error.message)
+      return readCategoriesLocal()
+    }
+
+    return data || []
+  } catch (e: any) {
+    console.warn("Supabase readCategories threw error. Falling back to local storage.", e)
+    return readCategoriesLocal()
   }
-
-  return data || []
 }
 
 export async function addCategory(name: string): Promise<Category | null> {
   const supabase = getSupabase()
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
-  if (!supabase) {
+  
+  const fallbackAdd = () => {
     const list = readCategoriesLocal()
     const newCat = { id: Date.now(), name, slug }
     list.push(newCat)
@@ -351,39 +366,58 @@ export async function addCategory(name: string): Promise<Category | null> {
     return newCat
   }
 
-  const { data, error } = await supabase
-    .from("categories")
-    .insert([{ name, slug }])
-    .select()
-
-  if (error) {
-    console.error("Error adding category:", error)
-    return null
+  if (!supabase) {
+    return fallbackAdd()
   }
 
-  return data?.[0] || null
+  try {
+    const { data, error } = await supabase
+      .from("categories")
+      .insert([{ name, slug }])
+      .select()
+
+    if (error) {
+      console.warn("Supabase addCategory failed. Falling back to local storage.", error.message)
+      return fallbackAdd()
+    }
+
+    return data?.[0] || null
+  } catch (e: any) {
+    console.warn("Supabase addCategory threw error. Falling back to local storage.", e)
+    return fallbackAdd()
+  }
 }
 
 export async function deleteCategory(id: any): Promise<boolean> {
   const supabase = getSupabase()
-  if (!supabase) {
+  
+  const fallbackDelete = () => {
     const list = readCategoriesLocal()
     const filtered = list.filter(c => String(c.id) !== String(id))
     writeCategoriesLocal(filtered)
     return true
   }
 
-  const { error } = await supabase
-    .from("categories")
-    .delete()
-    .eq("id", id)
-
-  if (error) {
-    console.error("Error deleting category:", error)
-    return false
+  if (!supabase) {
+    return fallbackDelete()
   }
 
-  return true
+  try {
+    const { error } = await supabase
+      .from("categories")
+      .delete()
+      .eq("id", id)
+
+    if (error) {
+      console.warn("Supabase deleteCategory failed. Falling back to local storage.", error.message)
+      return fallbackDelete()
+    }
+
+    return true
+  } catch (e: any) {
+    console.warn("Supabase deleteCategory threw error. Falling back to local storage.", e)
+    return fallbackDelete()
+  }
 }
 
 export async function readTags(): Promise<Tag[]> {
@@ -392,23 +426,29 @@ export async function readTags(): Promise<Tag[]> {
     return readTagsLocal()
   }
 
-  const { data, error } = await supabase
-    .from("tags")
-    .select("*")
-    .order("name", { ascending: true })
+  try {
+    const { data, error } = await supabase
+      .from("tags")
+      .select("*")
+      .order("name", { ascending: true })
 
-  if (error) {
-    console.error("Error reading tags from Supabase:", error)
-    return []
+    if (error) {
+      console.warn("Supabase readTags failed. Falling back to local storage.", error.message)
+      return readTagsLocal()
+    }
+
+    return data || []
+  } catch (e: any) {
+    console.warn("Supabase readTags threw error. Falling back to local storage.", e)
+    return readTagsLocal()
   }
-
-  return data || []
 }
 
 export async function addTag(name: string): Promise<Tag | null> {
   const supabase = getSupabase()
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
-  if (!supabase) {
+  
+  const fallbackAdd = () => {
     const list = readTagsLocal()
     const newTag = { id: Date.now(), name, slug }
     list.push(newTag)
@@ -416,39 +456,58 @@ export async function addTag(name: string): Promise<Tag | null> {
     return newTag
   }
 
-  const { data, error } = await supabase
-    .from("tags")
-    .insert([{ name, slug }])
-    .select()
-
-  if (error) {
-    console.error("Error adding tag:", error)
-    return null
+  if (!supabase) {
+    return fallbackAdd()
   }
 
-  return data?.[0] || null
+  try {
+    const { data, error } = await supabase
+      .from("tags")
+      .insert([{ name, slug }])
+      .select()
+
+    if (error) {
+      console.warn("Supabase addTag failed. Falling back to local storage.", error.message)
+      return fallbackAdd()
+    }
+
+    return data?.[0] || null
+  } catch (e: any) {
+    console.warn("Supabase addTag threw error. Falling back to local storage.", e)
+    return fallbackAdd()
+  }
 }
 
 export async function deleteTag(id: any): Promise<boolean> {
   const supabase = getSupabase()
-  if (!supabase) {
+  
+  const fallbackDelete = () => {
     const list = readTagsLocal()
     const filtered = list.filter(t => String(t.id) !== String(id))
     writeTagsLocal(filtered)
     return true
   }
 
-  const { error } = await supabase
-    .from("tags")
-    .delete()
-    .eq("id", id)
-
-  if (error) {
-    console.error("Error deleting tag:", error)
-    return false
+  if (!supabase) {
+    return fallbackDelete()
   }
 
-  return true
+  try {
+    const { error } = await supabase
+      .from("tags")
+      .delete()
+      .eq("id", id)
+
+    if (error) {
+      console.warn("Supabase deleteTag failed. Falling back to local storage.", error.message)
+      return fallbackDelete()
+    }
+
+    return true
+  } catch (e: any) {
+    console.warn("Supabase deleteTag threw error. Falling back to local storage.", e)
+    return fallbackDelete()
+  }
 }
 
 export async function deleteProduct(slug: string): Promise<boolean> {
@@ -490,28 +549,33 @@ export async function readContacts(): Promise<ContactSubmission[]> {
     return readContactsLocal()
   }
 
-  const { data, error } = await supabase
-    .from("contacts")
-    .select("*")
-    .order("created_at", { ascending: false })
+  try {
+    const { data, error } = await supabase
+      .from("contacts")
+      .select("*")
+      .order("created_at", { ascending: false })
 
-  if (error) {
-    console.error("Error reading contacts from Supabase:", error)
-    return []
+    if (error) {
+      console.warn("Supabase readContacts failed. Falling back to local storage.", error.message)
+      return readContactsLocal()
+    }
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      subject: row.subject || undefined,
+      message: row.message,
+      productInterest: row.product_interest || undefined,
+      createdAt: row.created_at,
+      phone: row.phone || undefined,
+      city: row.city || undefined,
+      type: row.type || 'contact'
+    }))
+  } catch (e: any) {
+    console.warn("Supabase readContacts threw error. Falling back to local storage.", e)
+    return readContactsLocal()
   }
-
-  return (data || []).map((row: any) => ({
-    id: row.id,
-    name: row.name,
-    email: row.email,
-    subject: row.subject || undefined,
-    message: row.message,
-    productInterest: row.product_interest || undefined,
-    createdAt: row.created_at,
-    phone: row.phone || undefined,
-    city: row.city || undefined,
-    type: row.type || 'contact'
-  }))
 }
 
 export async function writeContacts(contacts: ContactSubmission[]) {
@@ -521,22 +585,27 @@ export async function writeContacts(contacts: ContactSubmission[]) {
     return
   }
 
-  const items = contacts.map((c) => ({
-    id: c.id && c.id.length > 10 ? c.id : undefined, // skip client generated temp ids to let postgres auto-generate uuid
-    name: c.name,
-    email: c.email,
-    subject: c.subject || null,
-    message: c.message,
-    product_interest: c.productInterest || null,
-    created_at: c.createdAt || new Date().toISOString(),
-    phone: c.phone || null,
-    city: c.city || null,
-    type: c.type || 'contact'
-  }))
+  try {
+    const items = contacts.map((c) => ({
+      id: c.id && c.id.length > 10 ? c.id : undefined, // skip client generated temp ids to let postgres auto-generate uuid
+      name: c.name,
+      email: c.email,
+      subject: c.subject || null,
+      message: c.message,
+      product_interest: c.productInterest || null,
+      created_at: c.createdAt || new Date().toISOString(),
+      phone: c.phone || null,
+      city: c.city || null,
+      type: c.type || 'contact'
+    }))
 
-  const { error } = await supabase.from("contacts").upsert(items, { onConflict: "id" })
-
-  if (error) {
-    console.error("Error writing contacts to Supabase:", error)
+    const { error } = await supabase.from("contacts").upsert(items, { onConflict: "id" })
+    if (error) {
+      console.warn("Supabase writeContacts failed. Falling back to local storage.", error.message)
+      writeContactsLocal(contacts)
+    }
+  } catch (e: any) {
+    console.warn("Supabase writeContacts threw error. Falling back to local storage.", e)
+    writeContactsLocal(contacts)
   }
 }

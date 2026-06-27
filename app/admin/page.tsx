@@ -18,7 +18,8 @@ import {
   Star,
   Tags,
   ChevronRight,
-  Inbox
+  Inbox,
+  Info
 } from "lucide-react"
 import { Product } from "@/lib/products"
 import { ContactSubmission } from "@/lib/db"
@@ -40,8 +41,8 @@ function AdminPageContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab") as any
   
-  // Navigation tabs: 'overview' | 'products' | 'categories_tags' | 'contacts'
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "categories_tags" | "contacts">("overview")
+  // Navigation tabs: 'overview' | 'products' | 'categories_tags' | 'contacts' | 'about_us'
+  const [activeTab, setActiveTab] = useState<"overview" | "products" | "categories_tags" | "contacts" | "about_us">("overview")
   const [products, setProducts] = useState<Product[]>([])
   const [contacts, setContacts] = useState<ContactSubmission[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -61,6 +62,11 @@ function AdminPageContent() {
 
   // Inquiries filter & export states
   const [inquiryTypeFilter, setInquiryTypeFilter] = useState<"all" | "contact" | "lead">("all")
+
+  // About Us settings states
+  const [aboutUs, setAboutUs] = useState<any>(null)
+  const [aboutUsError, setAboutUsError] = useState("")
+  const [aboutUsSuccess, setAboutUsSuccess] = useState("")
 
   const exportLeadsToCSV = () => {
     const leads = contacts.filter(c => c.type === "lead")
@@ -99,7 +105,7 @@ function AdminPageContent() {
 
   // Sync with search parameter tab on load
   useEffect(() => {
-    if (tabParam && ["overview", "products", "categories_tags", "contacts"].includes(tabParam)) {
+    if (tabParam && ["overview", "products", "categories_tags", "contacts", "about_us"].includes(tabParam)) {
       setActiveTab(tabParam)
     }
   }, [tabParam])
@@ -108,17 +114,19 @@ function AdminPageContent() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [prodRes, conRes, catRes, tagRes] = await Promise.all([
+      const [prodRes, conRes, catRes, tagRes, aboutRes] = await Promise.all([
         fetch("/api/products"),
         fetch("/api/contacts"),
         fetch("/api/categories"),
-        fetch("/api/tags")
+        fetch("/api/tags"),
+        fetch("/api/about-us")
       ])
       
       if (prodRes.ok) setProducts(await prodRes.json())
       if (conRes.ok) setContacts(await conRes.json())
       if (catRes.ok) setCategories(await catRes.json())
       if (tagRes.ok) setTags(await tagRes.json())
+      if (aboutRes.ok) setAboutUs(await aboutRes.json())
     } catch (e) {
       console.error("Failed to load admin data:", e)
     } finally {
@@ -229,9 +237,33 @@ function AdminPageContent() {
     }
   }
 
-  const handleTabChange = (tab: "overview" | "products" | "categories_tags" | "contacts") => {
+  const handleTabChange = (tab: "overview" | "products" | "categories_tags" | "contacts" | "about_us") => {
     setActiveTab(tab)
     router.replace(`/admin?tab=${tab}`)
+  }
+
+  const handleSaveAboutUs = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setAboutUsError("")
+    setAboutUsSuccess("")
+    
+    try {
+      const res = await fetch("/api/about-us", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(aboutUs)
+      })
+      
+      if (res.ok) {
+        setAboutUsSuccess("About Us details updated successfully!")
+        setTimeout(() => setAboutUsSuccess(""), 3000)
+      } else {
+        const err = await res.json()
+        setAboutUsError(err.error || "Failed to update details")
+      }
+    } catch (e) {
+      setAboutUsError("Network error. Please try again.")
+    }
   }
 
   // Filtered products list
@@ -313,6 +345,17 @@ function AdminPageContent() {
                   {contacts.length}
                 </span>
               )}
+            </button>
+            <button
+              onClick={() => handleTabChange("about_us")}
+              className={`flex items-center gap-3 px-4 py-3 text-xs font-semibold tracking-wider uppercase transition-all duration-300 w-full rounded-md ${
+                activeTab === "about_us" 
+                  ? "bg-[#FAF6F0] text-[#9A7B4F] border-l-2 border-[#9A7B4F]" 
+                  : "text-muted-foreground hover:bg-[#F9F9F9] hover:text-[#1C1C1C]"
+              }`}
+            >
+              <Info className="h-4 w-4" strokeWidth={1.5} />
+              About Us Settings
             </button>
           </nav>
         </aside>
@@ -778,6 +821,221 @@ function AdminPageContent() {
                   </div>
                 )
               })()}
+
+              {/* ========== ABOUT US SETTINGS TAB ========== */}
+              {activeTab === "about_us" && aboutUs && (
+                <div className="flex flex-col gap-8 animate-in fade-in duration-300">
+                  <div>
+                    <h2 className="font-serif text-3xl text-[#1C1C1C] tracking-wide">About Us Settings</h2>
+                    <p className="text-xs text-muted-foreground mt-1 font-medium">Update the story, company profile details, vision, and mission content displayed on your public website.</p>
+                  </div>
+
+                  {aboutUsSuccess && (
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs px-4 py-3 rounded font-semibold">
+                      {aboutUsSuccess}
+                    </div>
+                  )}
+                  {aboutUsError && (
+                    <div className="bg-red-50 border border-red-200 text-red-800 text-xs px-4 py-3 rounded font-semibold">
+                      {aboutUsError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSaveAboutUs} className="flex flex-col gap-8 bg-white border border-[#EAEAEA] p-8 rounded shadow-xs">
+                    
+                    {/* Beginning Story Section */}
+                    <div className="flex flex-col gap-5">
+                      <h3 className="text-xs uppercase tracking-widest text-[#9A7B4F] font-bold border-b border-[#FAF6F0] pb-2">1. Origin Story Section</h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Beginning Section Title</label>
+                          <input
+                            type="text"
+                            value={aboutUs.beginningTitle || ""}
+                            onChange={(e) => setAboutUs({ ...aboutUs, beginningTitle: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Beginning Image URL</label>
+                          <input
+                            type="text"
+                            value={aboutUs.beginningImage || ""}
+                            onChange={(e) => setAboutUs({ ...aboutUs, beginningImage: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Beginning Descriptive Text</label>
+                        <textarea
+                          rows={4}
+                          value={aboutUs.beginningText || ""}
+                          onChange={(e) => setAboutUs({ ...aboutUs, beginningText: e.target.value })}
+                          className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C] leading-relaxed resize-y"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Vision Section */}
+                    <div className="flex flex-col gap-5 mt-4">
+                      <h3 className="text-xs uppercase tracking-widest text-[#9A7B4F] font-bold border-b border-[#FAF6F0] pb-2">2. Vision Statement</h3>
+                      
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Vision Title</label>
+                        <input
+                          type="text"
+                          value={aboutUs.visionTitle || ""}
+                          onChange={(e) => setAboutUs({ ...aboutUs, visionTitle: e.target.value })}
+                          className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                          required
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Vision Statement Text</label>
+                        <textarea
+                          rows={4}
+                          value={aboutUs.visionText || ""}
+                          onChange={(e) => setAboutUs({ ...aboutUs, visionText: e.target.value })}
+                          className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C] leading-relaxed resize-y"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Mission Section */}
+                    <div className="flex flex-col gap-5 mt-4">
+                      <h3 className="text-xs uppercase tracking-widest text-[#9A7B4F] font-bold border-b border-[#FAF6F0] pb-2">3. Mission Philosophy</h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Mission Title</label>
+                          <input
+                            type="text"
+                            value={aboutUs.missionTitle || ""}
+                            onChange={(e) => setAboutUs({ ...aboutUs, missionTitle: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Mission Image URL</label>
+                          <input
+                            type="text"
+                            value={aboutUs.missionImage || ""}
+                            onChange={(e) => setAboutUs({ ...aboutUs, missionImage: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Mission Descriptive Text</label>
+                        <textarea
+                          rows={4}
+                          value={aboutUs.missionText || ""}
+                          onChange={(e) => setAboutUs({ ...aboutUs, missionText: e.target.value })}
+                          className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C] leading-relaxed resize-y"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Company Profile Details */}
+                    <div className="flex flex-col gap-5 mt-4">
+                      <h3 className="text-xs uppercase tracking-widest text-[#9A7B4F] font-bold border-b border-[#FAF6F0] pb-2">4. Corporate Directory Info</h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Company Name</label>
+                          <input
+                            type="text"
+                            value={aboutUs.companyName || ""}
+                            onChange={(e) => setAboutUs({ ...aboutUs, companyName: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Corporate Email</label>
+                          <input
+                            type="email"
+                            value={aboutUs.companyEmail || ""}
+                            onChange={(e) => setAboutUs({ ...aboutUs, companyEmail: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Helpline / Phone</label>
+                          <input
+                            type="text"
+                            value={aboutUs.companyPhone || ""}
+                            onChange={(e) => setAboutUs({ ...aboutUs, companyPhone: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Website URL</label>
+                          <input
+                            type="text"
+                            value={aboutUs.companyWebsite || ""}
+                            onChange={(e) => setAboutUs({ ...aboutUs, companyWebsite: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Establishment / Setup Date</label>
+                          <input
+                            type="text"
+                            value={aboutUs.setupDate || ""}
+                            onChange={(e) => setAboutUs({ ...aboutUs, setupDate: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Registered Capital</label>
+                          <input
+                            type="text"
+                            value={aboutUs.capital || ""}
+                            onChange={(e) => setAboutUs({ ...aboutUs, capital: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Business Content & Description</label>
+                        <textarea
+                          rows={3}
+                          value={aboutUs.businessContent || ""}
+                          onChange={(e) => setAboutUs({ ...aboutUs, businessContent: e.target.value })}
+                          className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C] leading-relaxed resize-y"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="bg-[#9A7B4F] hover:bg-[#856941] text-white py-4 text-xs font-semibold uppercase tracking-widest mt-4 transition-colors duration-300 rounded shadow-xs"
+                    >
+                      Save About Us Details
+                    </button>
+                  </form>
+                </div>
+              )}
             </>
           )}
         </section>

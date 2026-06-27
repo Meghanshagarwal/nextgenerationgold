@@ -11,7 +11,7 @@ const navItems = [
   { name: "WATCHES", href: "/category/watches" },
   { name: "HOME", href: "/category/home" },
   { name: "ACCESSORIES", href: "/category/accessories" },
-  { name: "GIFTS", href: "/category/gifts" },
+  { name: "ABOUT US", href: "/about-us" },
 ]
 
 export function NggHeader() {
