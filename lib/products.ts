@@ -46,6 +46,7 @@ export type Product = {
   seoTitle?: string
   seoDescription?: string
   tags?: string[]
+  images?: string[]
 }
 
 export const products: Product[] = [

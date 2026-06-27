@@ -69,6 +69,7 @@ export default function AddProductPage() {
     seoTitle: "",
     seoDescription: "",
     image: "/images/prod-bracelet-yellow.png",
+    images: [] as string[],
     details: "",
     featured: true,
     selectedTags: [] as string[]
@@ -379,6 +380,47 @@ export default function AddProductPage() {
                 onSelect={(url) => setFormData(prev => ({ ...prev, image: url }))}
                 required
               />
+
+              {/* Product Gallery (Additional Images) */}
+              <div className="flex flex-col gap-3 mt-4 border-t border-[#F5F5F5] pt-4">
+                <label className="text-xs uppercase tracking-widest font-bold text-[#9A7B4F]">Product Gallery (Additional Images)</label>
+                <p className="text-[10px] text-muted-foreground font-medium -mt-1">Upload additional images for the product detail carousel slider.</p>
+                
+                {formData.images && formData.images.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4 border border-[#F5F5F5] bg-[#FAF9F6] p-4 rounded">
+                    {formData.images.map((imgUrl, imgIdx) => (
+                      <div key={imgIdx} className="relative aspect-square border border-[#EAEAEA] bg-white rounded overflow-hidden group">
+                        <img src={imgUrl} alt={`Gallery image ${imgIdx + 1}`} className="w-full h-full object-contain p-2" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              images: prev.images.filter((_, i) => i !== imgIdx)
+                            }))
+                          }}
+                          className="absolute inset-0 bg-red-600/80 text-white flex items-center justify-center text-[10px] font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <ImageUploader
+                  label="Select Gallery Image to Add"
+                  value=""
+                  onSelect={(url) => {
+                    if (url) {
+                      setFormData(prev => ({
+                        ...prev,
+                        images: [...(prev.images || []), url]
+                      }))
+                    }
+                  }}
+                />
+              </div>
             </div>
           </div>
 

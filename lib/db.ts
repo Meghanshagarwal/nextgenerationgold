@@ -28,6 +28,13 @@ async function seedProductsIfNeeded() {
   const supabase = getSupabase()
   if (!supabase) return
 
+  // Try to auto-add images column to products table if missing
+  try {
+    await supabase.rpc("exec_sql", {
+      sql: "ALTER TABLE products ADD COLUMN IF NOT EXISTS images TEXT[] DEFAULT '{}';"
+    })
+  } catch (_) {}
+
   try {
     const { count, error } = await supabase
       .from("products")
@@ -115,7 +122,8 @@ export function mapRowToProduct(row: any): Product {
     shippingInfo: row.shipping_info || undefined,
     seoTitle: row.seo_title || undefined,
     seoDescription: row.seo_description || undefined,
-    tags: row.tags || []
+    tags: row.tags || [],
+    images: row.images || []
   }
 }
 
@@ -165,7 +173,8 @@ export function mapProductToRow(p: Product) {
     shipping_info: p.shippingInfo || null,
     seo_title: p.seoTitle || null,
     seo_description: p.seoDescription || null,
-    tags: p.tags || []
+    tags: p.tags || [],
+    images: p.images || []
   }
 }
 

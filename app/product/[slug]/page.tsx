@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { MapPin, ChevronRight, Heart, ChevronDown, X } from "lucide-react"
+import { MapPin, ChevronRight, Heart, ChevronDown, X, ChevronLeft } from "lucide-react"
 import { NggHeader } from "@/components/ngg-header"
 import { NggFooter } from "@/components/ngg-footer"
 import { getProduct, products, Product } from "@/lib/products"
@@ -19,6 +19,7 @@ export default function ProductPage() {
   const [contactModalOpen, setContactModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [activeImage, setActiveImage] = useState("")
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -66,6 +67,12 @@ export default function ProductPage() {
     
     loadProduct()
   }, [slug])
+
+  useEffect(() => {
+    if (product) {
+      setActiveImage(product.image)
+    }
+  }, [product])
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -187,14 +194,77 @@ export default function ProductPage() {
           {/* ========== RIGHT COLUMN — SCROLLABLE ========== */}
           <div className="order-1 lg:order-2">
             {/* Hero product image */}
-            <div className="relative bg-secondary">
-              <div className="flex aspect-square items-center justify-center p-12 md:aspect-[4/3] md:p-20 lg:aspect-auto lg:min-h-[75vh] lg:p-24">
+            <div className="relative bg-secondary group">
+              <div className="relative flex aspect-square items-center justify-center p-12 md:aspect-[4/3] md:p-20 lg:aspect-auto lg:min-h-[70vh] lg:p-24">
                 <img
-                  src={product.image || "/placeholder.svg"}
+                  src={activeImage || product.image || "/placeholder.svg"}
                   alt={product.name}
-                  className="h-full max-h-[600px] w-auto object-contain transition-transform duration-700 hover:scale-105"
+                  className="h-full max-h-[550px] w-auto object-contain transition-transform duration-700 hover:scale-105"
                 />
+
+                {/* Left/Right Navigation Arrows overlay */}
+                {(() => {
+                  const allImages = [product.image, ...(product.images || [])].filter(Boolean)
+                  if (allImages.length <= 1) return null
+
+                  const currentIndex = allImages.indexOf(activeImage)
+                  
+                  const handlePrev = () => {
+                    const prevIdx = (currentIndex - 1 + allImages.length) % allImages.length
+                    setActiveImage(allImages[prevIdx])
+                  }
+
+                  const handleNext = () => {
+                    const nextIdx = (currentIndex + 1) % allImages.length
+                    setActiveImage(allImages[nextIdx])
+                  }
+
+                  return (
+                    <>
+                      <button
+                        onClick={handlePrev}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-foreground p-3 rounded-full border border-border transition-all duration-300 shadow-sm opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        aria-label="Previous image"
+                      >
+                        <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
+                      </button>
+                      <button
+                        onClick={handleNext}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-foreground p-3 rounded-full border border-border transition-all duration-300 shadow-sm opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        aria-label="Next image"
+                      >
+                        <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
+                      </button>
+                    </>
+                  )
+                })()}
               </div>
+
+              {/* Gallery Thumbnails List */}
+              {(() => {
+                const allImages = [product.image, ...(product.images || [])].filter(Boolean)
+                if (allImages.length <= 1) return null
+
+                return (
+                  <div className="flex items-center justify-center gap-3 px-6 pb-8 -mt-4 overflow-x-auto">
+                    {allImages.map((imgUrl, idx) => {
+                      const isActive = imgUrl === activeImage
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setActiveImage(imgUrl)}
+                          className={`relative w-16 h-16 aspect-square bg-white border rounded overflow-hidden p-1 transition-all duration-300 hover:scale-105 shrink-0 ${
+                            isActive ? "border-[#9A7B4F] ring-1 ring-[#9A7B4F]" : "border-border hover:border-muted-foreground"
+                          }`}
+                        >
+                          <img src={imgUrl} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-contain" />
+                        </button>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+
               {/* Scroll to discover */}
               <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-muted-foreground">
                 <span className="text-[11px] tracking-widest uppercase">Scroll to discover</span>
