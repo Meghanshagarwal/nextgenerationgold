@@ -177,6 +177,23 @@ export function ImageUploader({ value, onSelect, label = "Image", required = fal
     }
   }
 
+  const handleSelectAllToggle = () => {
+    if (images.length === 0) return
+    const allCurrentSelected = images.every(img => selectedList.some(item => item.id === img.id))
+    if (allCurrentSelected) {
+      const currentIds = images.map(img => img.id)
+      setSelectedList(selectedList.filter(item => !currentIds.includes(item.id)))
+    } else {
+      const nextList = [...selectedList]
+      images.forEach(img => {
+        if (!nextList.some(item => item.id === img.id)) {
+          nextList.push(img)
+        }
+      })
+      setSelectedList(nextList)
+    }
+  }
+
   const handleConfirm = () => {
     if (multiple) {
       if (selectedList.length > 0) {
@@ -307,9 +324,18 @@ export function ImageUploader({ value, onSelect, label = "Image", required = fal
                       <button
                         type="button"
                         onClick={() => { setSearch(""); fetchImages(1, "") }}
-                        className="text-xs text-muted-foreground hover:text-[#9A7B4F] px-2 transition-colors"
+                        className="text-xs text-muted-foreground hover:text-[#9A7B4F] px-2 transition-colors shrink-0"
                       >
                         Clear
+                      </button>
+                    )}
+                    {multiple && images.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleSelectAllToggle}
+                        className="bg-[#FAF6F0] border border-[#EBE3D5] text-[#9A7B4F] hover:bg-[#F0EDE8] px-4 py-2 text-xs font-semibold rounded transition-colors shrink-0 ml-auto"
+                      >
+                        {images.every(img => selectedList.some(item => item.id === img.id)) ? "Deselect Page" : "Select Page"}
                       </button>
                     )}
                   </form>
