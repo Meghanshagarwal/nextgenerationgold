@@ -259,7 +259,10 @@ function AdminPageContent() {
         setTimeout(() => setAboutUsSuccess(""), 3000)
       } else {
         const err = await res.json()
-        setAboutUsError(err.error || "Failed to update details")
+        const msg = err.fix
+          ? `${err.error}\n\nSQL Fix:\n${err.fix}`
+          : err.error || "Failed to update details"
+        setAboutUsError(msg)
       }
     } catch (e) {
       setAboutUsError("Network error. Please try again.")
@@ -836,7 +839,7 @@ function AdminPageContent() {
                     </div>
                   )}
                   {aboutUsError && (
-                    <div className="bg-red-50 border border-red-200 text-red-800 text-xs px-4 py-3 rounded font-semibold">
+                    <div className="bg-red-50 border border-red-200 text-red-800 text-xs px-4 py-3 rounded font-semibold whitespace-pre-wrap font-mono leading-relaxed">
                       {aboutUsError}
                     </div>
                   )}

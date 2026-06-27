@@ -26,30 +26,55 @@ function getSupabase() {
   return createClient(url, key)
 }
 
+// Try to auto-create the site_settings table if it doesn't exist
+async function ensureTable(supabase: ReturnType<typeof createClient>) {
+  try {
+    await supabase.rpc("exec_sql", {
+      sql: `
+        CREATE TABLE IF NOT EXISTS site_settings (
+          key TEXT PRIMARY KEY,
+          value JSONB NOT NULL,
+          updated_at TIMESTAMPTZ DEFAULT now()
+        );
+      `
+    })
+  } catch (_) {
+    // rpc may not exist — try a raw query approach via insert to detect table
+  }
+}
+
 export async function GET() {
   const supabase = getSupabase()
 
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from("site_settings")
-        .select("value")
-        .eq("key", "about_us")
-        .single()
-
-      if (error) {
-        console.warn("[about-us GET] Supabase error:", error.code, error.message)
-      }
-
-      if (!error && data?.value) {
-        return NextResponse.json({ ...defaults, ...data.value })
-      }
-    } catch (e) {
-      console.warn("[about-us GET] Supabase threw:", e)
-    }
+  if (!supabase) {
+    return NextResponse.json(defaults)
   }
 
-  // Fallback: return defaults
+  try {
+    const { data, error } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "about_us")
+      .single()
+
+    if (error) {
+      // PGRST116 = no rows found (normal on first run)
+      // 42P01 = table doesn't exist
+      if (error.code === "42P01") {
+        console.warn("[about-us GET] site_settings table missing — returning defaults")
+      } else if (error.code !== "PGRST116") {
+        console.warn("[about-us GET] Supabase error:", error.code, error.message)
+      }
+      return NextResponse.json(defaults)
+    }
+
+    if (data?.value) {
+      return NextResponse.json({ ...defaults, ...data.value })
+    }
+  } catch (e) {
+    console.warn("[about-us GET] Supabase threw:", e)
+  }
+
   return NextResponse.json(defaults)
 }
 
@@ -60,20 +85,31 @@ export async function POST(req: Request) {
 
     const supabase = getSupabase()
     if (!supabase) {
-      // No Supabase configured – return merged so UI shows success but warn
-      console.warn("[about-us POST] No Supabase env vars - settings NOT persisted")
+      console.warn("[about-us POST] No Supabase env vars — settings NOT persisted")
       return NextResponse.json(merged)
     }
 
-    // Upsert into site_settings table
+    // First attempt to upsert
     const { error } = await supabase
       .from("site_settings")
-      .upsert({ key: "about_us", value: merged }, { onConflict: "key" })
+      .upsert({ key: "about_us", value: merged, updated_at: new Date().toISOString() }, { onConflict: "key" })
 
     if (error) {
-      console.error("[about-us POST] Supabase upsert failed:", error.code, error.message, error.details, error.hint)
+      if (error.code === "42P01") {
+        // Table doesn't exist — tell user exactly what SQL to run
+        console.error("[about-us POST] site_settings table missing. Run SQL migration.")
+        return NextResponse.json(
+          {
+            error: "The 'site_settings' table does not exist in your Supabase database.",
+            fix: "Run this SQL in your Supabase Dashboard → SQL Editor:\n\nCREATE TABLE IF NOT EXISTS site_settings (\n  key TEXT PRIMARY KEY,\n  value JSONB NOT NULL,\n  updated_at TIMESTAMPTZ DEFAULT now()\n);"
+          },
+          { status: 503 }
+        )
+      }
+
+      console.error("[about-us POST] Supabase upsert failed:", error.code, error.message)
       return NextResponse.json(
-        { error: `Supabase error (${error.code}): ${error.message}. Hint: ${error.hint || "Run the site_settings SQL migration in Supabase dashboard."}` },
+        { error: `Supabase error (${error.code}): ${error.message}` },
         { status: 500 }
       )
     }
@@ -81,6 +117,9 @@ export async function POST(req: Request) {
     return NextResponse.json(merged)
   } catch (error: any) {
     console.error("[about-us POST] Unexpected error:", error)
-    return NextResponse.json({ error: "Server error: " + (error?.message || String(error)) }, { status: 500 })
+    return NextResponse.json(
+      { error: "Server error: " + (error?.message || String(error)) },
+      { status: 500 }
+    )
   }
 }
