@@ -1,19 +1,31 @@
 import Link from "next/link"
 
-const categories = [
+interface CategoryData {
+  title: string
+  image: string
+  href: string
+}
+
+interface NggCategoriesProps {
+  data?: CategoryData[]
+}
+
+const defaultCategories: CategoryData[] = [
   { title: "Jewelry", image: "/images/cat-jewelry.png", href: "/category/jewelry" },
   { title: "Love & Engagement", image: "/images/cat-engagement.png", href: "/category/love-engagement" },
   { title: "Gifts", image: "/images/cat-gifts.png", href: "/category/gifts" },
 ]
 
-export function NggCategories() {
+export function NggCategories({ data }: NggCategoriesProps) {
+  const categoriesList = data && data.length > 0 ? data : defaultCategories
+
   return (
     <section className="mx-auto max-w-[1600px] px-6 py-16 md:px-10 md:py-24">
       <h2 className="mb-10 text-center font-serif text-3xl text-foreground text-balance md:text-4xl">
         Shop by Category
       </h2>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-        {categories.map((category) => (
+        {categoriesList.map((category) => (
           <Link key={category.title} href={category.href} className="group block">
             <div className="relative aspect-[4/5] w-full overflow-hidden bg-muted">
               <img

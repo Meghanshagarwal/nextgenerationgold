@@ -42,8 +42,8 @@ function AdminPageContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab") as any
   
-  // Navigation tabs: 'overview' | 'products' | 'categories_tags' | 'contacts' | 'about_us' | 'high_jewelry' | 'jewelry_page' | 'navigation_menu'
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "categories_tags" | "contacts" | "about_us" | "high_jewelry" | "jewelry_page" | "navigation_menu">("overview")
+  // Navigation tabs: 'overview' | 'products' | 'categories_tags' | 'contacts' | 'about_us' | 'high_jewelry' | 'jewelry_page' | 'navigation_menu' | 'home_page'
+  const [activeTab, setActiveTab] = useState<"overview" | "products" | "categories_tags" | "contacts" | "about_us" | "high_jewelry" | "jewelry_page" | "navigation_menu" | "home_page">("overview")
   const [products, setProducts] = useState<Product[]>([])
   const [contacts, setContacts] = useState<ContactSubmission[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -84,6 +84,11 @@ function AdminPageContent() {
   const [navigationMenuError, setNavigationMenuError] = useState("")
   const [navigationMenuSuccess, setNavigationMenuSuccess] = useState("")
 
+  // Home page settings states
+  const [homePage, setHomePage] = useState<any>(null)
+  const [homePageError, setHomePageError] = useState("")
+  const [homePageSuccess, setHomePageSuccess] = useState("")
+
   const exportLeadsToCSV = () => {
     const leads = contacts.filter(c => c.type === "lead")
     if (leads.length === 0) {
@@ -121,7 +126,7 @@ function AdminPageContent() {
 
   // Sync with search parameter tab on load
   useEffect(() => {
-    if (tabParam && ["overview", "products", "categories_tags", "contacts", "about_us", "high_jewelry", "jewelry_page", "navigation_menu"].includes(tabParam)) {
+    if (tabParam && ["overview", "products", "categories_tags", "contacts", "about_us", "high_jewelry", "jewelry_page", "navigation_menu", "home_page"].includes(tabParam)) {
       setActiveTab(tabParam)
     }
   }, [tabParam])
@@ -130,7 +135,7 @@ function AdminPageContent() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [prodRes, conRes, catRes, tagRes, aboutRes, hjRes, jpRes, nmRes] = await Promise.all([
+      const [prodRes, conRes, catRes, tagRes, aboutRes, hjRes, jpRes, nmRes, hmRes] = await Promise.all([
         fetch("/api/products"),
         fetch("/api/contacts"),
         fetch("/api/categories"),
@@ -138,7 +143,8 @@ function AdminPageContent() {
         fetch("/api/about-us"),
         fetch("/api/high-jewelry"),
         fetch("/api/jewelry-page"),
-        fetch("/api/navigation-menu")
+        fetch("/api/navigation-menu"),
+        fetch("/api/home-page")
       ])
       
       if (prodRes.ok) setProducts(await prodRes.json())
@@ -149,6 +155,7 @@ function AdminPageContent() {
       if (hjRes.ok) setHighJewelry(await hjRes.json())
       if (jpRes.ok) setJewelryPage(await jpRes.json())
       if (nmRes.ok) setNavigationMenu(await nmRes.json())
+      if (hmRes.ok) setHomePage(await hmRes.json())
     } catch (e) {
       console.error("Failed to load admin data:", e)
     } finally {
@@ -372,6 +379,33 @@ function AdminPageContent() {
     }
   }
 
+  const handleSaveHomePage = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setHomePageError("")
+    setHomePageSuccess("")
+    
+    try {
+      const res = await fetch("/api/home-page", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(homePage)
+      })
+      
+      if (res.ok) {
+        setHomePageSuccess("Home page settings updated successfully!")
+        setTimeout(() => setHomePageSuccess(""), 3000)
+      } else {
+        const err = await res.json()
+        const msg = err.fix
+          ? `${err.error}\n\nSQL Fix:\n${err.fix}`
+          : err.error || "Failed to update home settings"
+        setHomePageError(msg)
+      }
+    } catch (e) {
+      setHomePageError("Network error. Please try again.")
+    }
+  }
+
   // Filtered products list
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -495,6 +529,17 @@ function AdminPageContent() {
             >
               <LayoutDashboard className="h-4 w-4" strokeWidth={1.5} />
               Navigation Menu
+            </button>
+            <button
+              onClick={() => handleTabChange("home_page")}
+              className={`flex items-center gap-3 px-4 py-3 text-xs font-semibold tracking-wider uppercase transition-all duration-300 w-full rounded-md ${
+                activeTab === "home_page" 
+                  ? "bg-[#FAF6F0] text-[#9A7B4F] border-l-2 border-[#9A7B4F]" 
+                  : "text-muted-foreground hover:bg-[#F9F9F9] hover:text-[#1C1C1C]"
+              }`}
+            >
+              <Home className="h-4 w-4" strokeWidth={1.5} />
+              Home Page Settings
             </button>
           </nav>
         </aside>
@@ -1439,6 +1484,280 @@ function AdminPageContent() {
                       className="bg-[#9A7B4F] hover:bg-[#856941] text-white py-4 text-xs font-semibold uppercase tracking-widest mt-4 transition-colors duration-300 rounded shadow-xs"
                     >
                       Save Navigation Menu Items
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {activeTab === "home_page" && homePage && (
+                <div className="flex flex-col gap-6 max-w-4xl">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-bold text-[#9A7B4F] uppercase tracking-widest">Settings Panel</span>
+                    <h2 className="font-serif text-2xl md:text-3xl text-[#1C1C1C] font-semibold tracking-wide">Home Page Content Settings</h2>
+                    <p className="text-xs text-muted-foreground font-medium">Customize the text overlays, images, button descriptions, and category cards displayed on your homepage.</p>
+                  </div>
+
+                  {homePageSuccess && (
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs px-4 py-3 rounded font-semibold">
+                      {homePageSuccess}
+                    </div>
+                  )}
+                  {homePageError && (
+                    <div className="bg-red-50 border border-red-200 text-red-800 text-xs px-4 py-3 rounded font-semibold whitespace-pre-wrap font-mono leading-relaxed">
+                      {homePageError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSaveHomePage} className="flex flex-col gap-8 bg-white border border-[#EAEAEA] p-8 rounded shadow-xs">
+                    
+                    {/* SECTION 1: HERO */}
+                    <div className="flex flex-col gap-5 border-b border-[#FAF6F0] pb-6">
+                      <h3 className="text-xs uppercase tracking-widest text-[#9A7B4F] font-bold">1. Hero Banner Section</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Hero Title</label>
+                          <input
+                            type="text"
+                            value={homePage.hero?.title || ""}
+                            onChange={(e) => setHomePage({ ...homePage, hero: { ...homePage.hero, title: e.target.value } })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Button Link Destination</label>
+                          <input
+                            type="text"
+                            value={homePage.hero?.buttonLink || ""}
+                            onChange={(e) => setHomePage({ ...homePage, hero: { ...homePage.hero, buttonLink: e.target.value } })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Hero Description</label>
+                          <textarea
+                            rows={2}
+                            value={homePage.hero?.description || ""}
+                            onChange={(e) => setHomePage({ ...homePage, hero: { ...homePage.hero, description: e.target.value } })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C] leading-relaxed resize-y"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Button Display Text</label>
+                          <input
+                            type="text"
+                            value={homePage.hero?.buttonText || ""}
+                            onChange={(e) => setHomePage({ ...homePage, hero: { ...homePage.hero, buttonText: e.target.value } })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <ImageUploader
+                        label="Hero Background Image"
+                        value={homePage.hero?.image || ""}
+                        onSelect={(url) => setHomePage({ ...homePage, hero: { ...homePage.hero, image: url } })}
+                      />
+                    </div>
+
+                    {/* SECTION 2: CATEGORY CARDS */}
+                    <div className="flex flex-col gap-5 border-b border-[#FAF6F0] pb-6">
+                      <h3 className="text-xs uppercase tracking-widest text-[#9A7B4F] font-bold">2. Shop By Category Cards (3 Cards)</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {(homePage.categories || []).map((cat: any, idx: number) => (
+                          <div key={idx} className="border border-[#FAF6F0] bg-[#FAF9F6] p-5 rounded flex flex-col gap-4">
+                            <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#9A7B4F]">Category #{idx + 1}</h4>
+                            <div className="flex flex-col gap-2">
+                              <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Display Title</label>
+                              <input
+                                type="text"
+                                value={cat.title || ""}
+                                onChange={(e) => {
+                                  const nextCats = [...homePage.categories]
+                                  nextCats[idx] = { ...cat, title: e.target.value }
+                                  setHomePage({ ...homePage, categories: nextCats })
+                                }}
+                                className="bg-white border border-[#EAEAEA] px-4 py-2 text-xs focus:outline-none focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                                required
+                              />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">URL Destination</label>
+                              <input
+                                type="text"
+                                value={cat.href || ""}
+                                onChange={(e) => {
+                                  const nextCats = [...homePage.categories]
+                                  nextCats[idx] = { ...cat, href: e.target.value }
+                                  setHomePage({ ...homePage, categories: nextCats })
+                                }}
+                                className="bg-white border border-[#EAEAEA] px-4 py-2 text-xs focus:outline-none focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                                required
+                              />
+                            </div>
+                            <ImageUploader
+                              label="Card Image"
+                              value={cat.image || ""}
+                              onSelect={(url) => {
+                                const nextCats = [...homePage.categories]
+                                nextCats[idx] = { ...cat, image: url }
+                                setHomePage({ ...homePage, categories: nextCats })
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* SECTION 3: EDITORIALS */}
+                    <div className="flex flex-col gap-6 border-b border-[#FAF6F0] pb-6">
+                      <h3 className="text-xs uppercase tracking-widest text-[#9A7B4F] font-bold">3. Editorial Story Blocks</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Editorial Block 1 */}
+                        <div className="border border-[#FAF6F0] bg-[#FAF9F6] p-6 rounded flex flex-col gap-4">
+                          <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#9A7B4F]">Editorial Block #1 (e.g. Timepieces)</h4>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Eyebrow Title</label>
+                            <input
+                              type="text"
+                              value={homePage.editorial1?.eyebrow || ""}
+                              onChange={(e) => setHomePage({ ...homePage, editorial1: { ...homePage.editorial1, eyebrow: e.target.value } })}
+                              className="bg-white border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                              required
+                            />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Heading Title</label>
+                            <input
+                              type="text"
+                              value={homePage.editorial1?.title || ""}
+                              onChange={(e) => setHomePage({ ...homePage, editorial1: { ...homePage.editorial1, title: e.target.value } })}
+                              className="bg-white border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                              required
+                            />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Description Copy</label>
+                            <textarea
+                              rows={3}
+                              value={homePage.editorial1?.description || ""}
+                              onChange={(e) => setHomePage({ ...homePage, editorial1: { ...homePage.editorial1, description: e.target.value } })}
+                              className="bg-white border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C] leading-relaxed resize-y"
+                              required
+                            />
+                          </div>
+                          <ImageUploader
+                            label="Editorial Image"
+                            value={homePage.editorial1?.image || ""}
+                            onSelect={(url) => setHomePage({ ...homePage, editorial1: { ...homePage.editorial1, image: url } })}
+                          />
+                        </div>
+
+                        {/* Editorial Block 2 */}
+                        <div className="border border-[#FAF6F0] bg-[#FAF9F6] p-6 rounded flex flex-col gap-4">
+                          <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#9A7B4F]">Editorial Block #2 (e.g. Love & Engagement)</h4>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Eyebrow Title</label>
+                            <input
+                              type="text"
+                              value={homePage.editorial2?.eyebrow || ""}
+                              onChange={(e) => setHomePage({ ...homePage, editorial2: { ...homePage.editorial2, eyebrow: e.target.value } })}
+                              className="bg-white border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                              required
+                            />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Heading Title</label>
+                            <input
+                              type="text"
+                              value={homePage.editorial2?.title || ""}
+                              onChange={(e) => setHomePage({ ...homePage, editorial2: { ...homePage.editorial2, title: e.target.value } })}
+                              className="bg-white border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                              required
+                            />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Description Copy</label>
+                            <textarea
+                              rows={3}
+                              value={homePage.editorial2?.description || ""}
+                              onChange={(e) => setHomePage({ ...homePage, editorial2: { ...homePage.editorial2, description: e.target.value } })}
+                              className="bg-white border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C] leading-relaxed resize-y"
+                              required
+                            />
+                          </div>
+                          <ImageUploader
+                            label="Editorial Image"
+                            value={homePage.editorial2?.image || ""}
+                            onSelect={(url) => setHomePage({ ...homePage, editorial2: { ...homePage.editorial2, image: url } })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SECTION 4: WORLD OF NGG */}
+                    <div className="flex flex-col gap-5 pb-4">
+                      <h3 className="text-xs uppercase tracking-widest text-[#9A7B4F] font-bold">4. World of NGG Section</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Section Heading Title</label>
+                          <input
+                            type="text"
+                            value={homePage.world?.title || ""}
+                            onChange={(e) => setHomePage({ ...homePage, world: { ...homePage.world, title: e.target.value } })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Eyebrow Title</label>
+                          <input
+                            type="text"
+                            value={homePage.world?.subtitle || ""}
+                            onChange={(e) => setHomePage({ ...homePage, world: { ...homePage.world, subtitle: e.target.value } })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Button Display Text</label>
+                          <input
+                            type="text"
+                            value={homePage.world?.buttonText || ""}
+                            onChange={(e) => setHomePage({ ...homePage, world: { ...homePage.world, buttonText: e.target.value } })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Button URL Link</label>
+                          <input
+                            type="text"
+                            value={homePage.world?.buttonLink || ""}
+                            onChange={(e) => setHomePage({ ...homePage, world: { ...homePage.world, buttonLink: e.target.value } })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <ImageUploader
+                        label="Section Background Image"
+                        value={homePage.world?.image || ""}
+                        onSelect={(url) => setHomePage({ ...homePage, world: { ...homePage.world, image: url } })}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="bg-[#9A7B4F] hover:bg-[#856941] text-white py-4 text-xs font-semibold uppercase tracking-widest mt-4 transition-colors duration-300 rounded shadow-xs"
+                    >
+                      Save Home Page Settings
                     </button>
                   </form>
                 </div>

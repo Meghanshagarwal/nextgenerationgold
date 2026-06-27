@@ -1,5 +1,12 @@
 import Link from "next/link"
 
+interface EditorialBlockData {
+  eyebrow: string
+  title: string
+  description: string
+  image: string
+}
+
 interface EditorialProps {
   eyebrow: string
   title: string
@@ -29,21 +36,40 @@ function EditorialBlock({ eyebrow, title, description, image, reverse }: Editori
   )
 }
 
-export function NggEditorial() {
+interface NggEditorialProps {
+  data1?: EditorialBlockData
+  data2?: EditorialBlockData
+}
+
+export function NggEditorial({ data1, data2 }: NggEditorialProps) {
+  const block1 = {
+    eyebrow: data1?.eyebrow || "Timepieces",
+    title: data1?.title || "The Art of Time",
+    description: data1?.description || "Masterfully crafted watches that blend precision engineering with timeless elegance, designed to be cherished for generations.",
+    image: data1?.image || "/images/editorial-watch.png"
+  }
+
+  const block2 = {
+    eyebrow: data2?.eyebrow || "Love & Engagement",
+    title: data2?.title || "A Promise Made to Last",
+    description: data2?.description || "From the first spark to forever, celebrate your story with rings as extraordinary as your love. Each one a testament to enduring craftsmanship.",
+    image: data2?.image || "/images/editorial-love.png"
+  }
+
   return (
     <section className="bg-secondary">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-20 px-6 py-20 md:px-10 md:py-28">
         <EditorialBlock
-          eyebrow="Timepieces"
-          title="The Art of Time"
-          description="Masterfully crafted watches that blend precision engineering with timeless elegance, designed to be cherished for generations."
-          image="/images/editorial-watch.png"
+          eyebrow={block1.eyebrow}
+          title={block1.title}
+          description={block1.description}
+          image={block1.image}
         />
         <EditorialBlock
-          eyebrow="Love & Engagement"
-          title="A Promise Made to Last"
-          description="From the first spark to forever, celebrate your story with rings as extraordinary as your love. Each one a testament to enduring craftsmanship."
-          image="/images/editorial-love.png"
+          eyebrow={block2.eyebrow}
+          title={block2.title}
+          description={block2.description}
+          image={block2.image}
           reverse
         />
       </div>
