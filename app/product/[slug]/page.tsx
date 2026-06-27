@@ -254,20 +254,102 @@ export default function ProductPage() {
                   />
                 </button>
                 {moreDetailsOpen && (
-                  <div className="pb-8 text-sm leading-relaxed text-muted-foreground animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="flex flex-col gap-3">
-                      <p>
-                        <span className="font-medium text-foreground">Material:</span>{" "}
-                        {product.material}
-                      </p>
-                      <p>
-                        <span className="font-medium text-foreground">SKU:</span>{" "}
-                        {product.sku}
-                      </p>
-                      <p>
-                        <span className="font-medium text-foreground">Care:</span>{" "}
-                        Store in the provided pouch. Avoid contact with perfumes, chemicals, and moisture. Clean gently with a soft cloth.
-                      </p>
+                  <div className="pb-10 text-sm leading-relaxed text-muted-foreground animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex flex-col gap-6">
+                      
+                      {/* Specifications Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 border-t border-[#F5F5F5] pt-6">
+                        
+                        {/* Metal details */}
+                        {(product.metalType || product.goldPurity || product.goldColor || product.grossWeight || product.netGoldWeight) ? (
+                          <div className="flex flex-col gap-2">
+                            <h4 className="font-serif font-semibold text-foreground text-xs uppercase tracking-wider">Metal Details</h4>
+                            <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                              {product.metalType && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Metal:</span><span className="font-medium text-foreground text-right">{product.metalType}</span></div>}
+                              {product.goldPurity && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Purity:</span><span className="font-medium text-foreground text-right">{product.goldPurity}</span></div>}
+                              {product.goldColor && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Color:</span><span className="font-medium text-foreground text-right">{product.goldColor}</span></div>}
+                              {product.grossWeight && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Gross Weight:</span><span className="font-medium text-foreground text-right">{product.grossWeight} g</span></div>}
+                              {product.netGoldWeight && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Net Gold Weight:</span><span className="font-medium text-foreground text-right">{product.netGoldWeight} g</span></div>}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {/* Diamond Details */}
+                        {(product.diamondType || product.totalDiamondWeight || product.diamondShape || product.diamondColor || product.diamondClarity || product.numberOfDiamonds) ? (
+                          <div className="flex flex-col gap-2">
+                            <h4 className="font-serif font-semibold text-foreground text-xs uppercase tracking-wider">Diamond Specifications</h4>
+                            <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                              {product.diamondType && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Type:</span><span className="font-medium text-foreground text-right">{product.diamondType}</span></div>}
+                              {product.totalDiamondWeight && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Total Weight:</span><span className="font-medium text-foreground text-right">{product.totalDiamondWeight} CTS</span></div>}
+                              {product.diamondShape && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Shape:</span><span className="font-medium text-foreground text-right">{product.diamondShape}</span></div>}
+                              {product.diamondColor && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Color Grade:</span><span className="font-medium text-foreground text-right">{product.diamondColor}</span></div>}
+                              {product.diamondClarity && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Clarity:</span><span className="font-medium text-foreground text-right">{product.diamondClarity}</span></div>}
+                              {product.numberOfDiamonds && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Count:</span><span className="font-medium text-foreground text-right">{product.numberOfDiamonds}</span></div>}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {/* Gemstone Details */}
+                        {(product.gemstoneType || product.gemstoneShape || product.gemstoneSize || product.totalGemstoneWeight || product.numberOfGemstones) ? (
+                          <div className="flex flex-col gap-2">
+                            <h4 className="font-serif font-semibold text-foreground text-xs uppercase tracking-wider">Gemstone Specifications</h4>
+                            <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                              {product.gemstoneType && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Type:</span><span className="font-medium text-foreground text-right">{product.gemstoneType}</span></div>}
+                              {product.gemstoneShape && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Shape:</span><span className="font-medium text-foreground text-right">{product.gemstoneShape}</span></div>}
+                              {product.gemstoneSize && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Size:</span><span className="font-medium text-foreground text-right">{product.gemstoneSize}</span></div>}
+                              {product.totalGemstoneWeight && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Total Weight:</span><span className="font-medium text-foreground text-right">{product.totalGemstoneWeight} CTS</span></div>}
+                              {product.numberOfGemstones && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Count:</span><span className="font-medium text-foreground text-right">{product.numberOfGemstones}</span></div>}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {/* Dimensions & Sizing */}
+                        {(product.dimensions || product.ringSize || product.necklaceLength) ? (
+                          <div className="flex flex-col gap-2">
+                            <h4 className="font-serif font-semibold text-foreground text-xs uppercase tracking-wider">Sizing & Measurements</h4>
+                            <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                              {product.dimensions && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Dimensions:</span><span className="font-medium text-foreground text-right">{product.dimensions}</span></div>}
+                              {product.ringSize && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Ring Size:</span><span className="font-medium text-foreground text-right">{product.ringSize}</span></div>}
+                              {product.necklaceLength && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Necklace Length:</span><span className="font-medium text-foreground text-right">{product.necklaceLength}</span></div>}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {/* Logistics & Registry */}
+                        <div className="flex flex-col gap-2">
+                          <h4 className="font-serif font-semibold text-foreground text-xs uppercase tracking-wider">Registry & Integrity</h4>
+                          <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                            {product.sku && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>SKU:</span><span className="font-mono font-medium text-foreground text-right">{product.sku}</span></div>}
+                            {product.material && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Material Value:</span><span className="font-medium text-foreground text-right">{product.material}</span></div>}
+                            {product.certification && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Certification:</span><span className="font-medium text-foreground text-right">{product.certification}</span></div>}
+                            {product.hallmarkDetails && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Hallmarking:</span><span className="font-medium text-foreground text-right">{product.hallmarkDetails}</span></div>}
+                          </div>
+                        </div>
+
+                        {/* Shipping & Production */}
+                        {(product.stockStatus || product.productionTime || product.shippingInfo || product.origin || product.treatment) ? (
+                          <div className="flex flex-col gap-2">
+                            <h4 className="font-serif font-semibold text-foreground text-xs uppercase tracking-wider">Availability & Logistics</h4>
+                            <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                              {product.stockStatus && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Status:</span><span className="font-medium text-foreground text-right">{product.stockStatus}</span></div>}
+                              {product.productionTime && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Production Time:</span><span className="font-medium text-foreground text-right">{product.productionTime}</span></div>}
+                              {product.shippingInfo && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Shipping:</span><span className="font-medium text-foreground text-right">{product.shippingInfo}</span></div>}
+                              {product.origin && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Origin:</span><span className="font-medium text-foreground text-right">{product.origin}</span></div>}
+                              {product.treatment && <div className="flex justify-between py-1 border-b border-[#F5F5F5] gap-4"><span>Treatment:</span><span className="font-medium text-foreground text-right">{product.treatment}</span></div>}
+                            </div>
+                          </div>
+                        ) : null}
+
+                      </div>
+
+                      {/* Care instructions */}
+                      <div className="border-t border-[#F5F5F5] pt-6 flex flex-col gap-2">
+                        <span className="font-serif font-semibold text-foreground text-xs uppercase tracking-wider">Care Instructions</span>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                          Store in the provided luxury pouch. Avoid direct contact with abrasive surfaces, perfumes, chemicals, and moisture. Clean gently using a soft polishing cloth.
+                        </p>
+                      </div>
+
                     </div>
                   </div>
                 )}

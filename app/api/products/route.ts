@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
     const newProduct = {
       slug,
-      image: body.image || "/placeholder.svg",
+      image: body.image || "/images/prod-bracelet-yellow.png",
       collection: body.collection,
       name: body.name,
       price: body.price,
@@ -34,7 +34,43 @@ export async function POST(req: Request) {
       details: Array.isArray(body.details) ? body.details : (body.details ? body.details.split("\n").map((d: string) => d.trim()).filter(Boolean) : []),
       material: body.material || "",
       sku: body.sku || `NGG-${body.collection.substring(0,3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
-      featured: body.featured !== false
+      featured: body.featured !== false,
+      
+      // Jewelry specific fields
+      category: body.category || "",
+      productType: body.productType || "",
+      shortDescription: body.shortDescription || "",
+      styling: body.styling || "",
+      occasions: body.occasions || "",
+      metalType: body.metalType || "",
+      goldPurity: body.goldPurity || "",
+      goldColor: body.goldColor || "",
+      grossWeight: body.grossWeight || "",
+      netGoldWeight: body.netGoldWeight || "",
+      diamondType: body.diamondType || "",
+      totalDiamondWeight: body.totalDiamondWeight || "",
+      diamondShape: body.diamondShape || "",
+      diamondColor: body.diamondColor || "",
+      diamondClarity: body.diamondClarity || "",
+      numberOfDiamonds: body.numberOfDiamonds !== undefined ? body.numberOfDiamonds : "",
+      gemstoneType: body.gemstoneType || "",
+      gemstoneShape: body.gemstoneShape || "",
+      gemstoneSize: body.gemstoneSize || "",
+      totalGemstoneWeight: body.totalGemstoneWeight || "",
+      numberOfGemstones: body.numberOfGemstones !== undefined ? body.numberOfGemstones : "",
+      origin: body.origin || "",
+      treatment: body.treatment || "",
+      dimensions: body.dimensions || "",
+      ringSize: body.ringSize || "",
+      necklaceLength: body.necklaceLength || "",
+      stockStatus: body.stockStatus || "In Stock",
+      productionTime: body.productionTime || "",
+      certification: body.certification || "",
+      hallmarkDetails: body.hallmarkDetails || "",
+      shippingInfo: body.shippingInfo || "",
+      seoTitle: body.seoTitle || "",
+      seoDescription: body.seoDescription || "",
+      tags: Array.isArray(body.tags) ? body.tags : []
     }
 
     products.push(newProduct)

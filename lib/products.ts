@@ -10,6 +10,42 @@ export type Product = {
   material: string
   sku: string
   featured?: boolean
+  
+  // Jewelry specific fields
+  category?: string
+  productType?: string
+  shortDescription?: string
+  styling?: string
+  occasions?: string
+  metalType?: string
+  goldPurity?: string
+  goldColor?: string
+  grossWeight?: string
+  netGoldWeight?: string
+  diamondType?: string
+  totalDiamondWeight?: string
+  diamondShape?: string
+  diamondColor?: string
+  diamondClarity?: string
+  numberOfDiamonds?: number | string
+  gemstoneType?: string
+  gemstoneShape?: string
+  gemstoneSize?: string
+  totalGemstoneWeight?: string
+  numberOfGemstones?: number | string
+  origin?: string
+  treatment?: string
+  dimensions?: string
+  ringSize?: string
+  necklaceLength?: string
+  stockStatus?: string
+  productionTime?: string
+  certification?: string
+  hallmarkDetails?: string
+  shippingInfo?: string
+  seoTitle?: string
+  seoDescription?: string
+  tags?: string[]
 }
 
 export const products: Product[] = [

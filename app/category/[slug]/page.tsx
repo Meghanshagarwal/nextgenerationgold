@@ -60,13 +60,20 @@ export default function CategoryPage() {
 
   // Get initial category/collection-filtered products
   const categoryProducts = useMemo(() => {
-    if (slug === "jewelry" || slug === "high-jewelry" || slug === "gifts") {
-      // General categories show all items (since they are all jewelry)
-      return products
+    const normalizedSlug = slug.toLowerCase().replace(/-/g, "")
+    
+    // Check if any product has a matching category field
+    const categoryFiltered = products.filter(p => {
+      if (!p.category) return false
+      const normalizedCat = p.category.toLowerCase().replace(/[^a-z0-9]/g, "")
+      return normalizedCat === normalizedSlug || normalizedCat.includes(normalizedSlug) || normalizedSlug.includes(normalizedCat)
+    })
+
+    if (categoryFiltered.length > 0) {
+      return categoryFiltered
     }
 
     // Check if the slug matches a collection name (case-insensitive, hyphen-insensitive)
-    const normalizedSlug = slug.toLowerCase().replace(/-/g, "")
     const collectionFiltered = products.filter(p => {
       const normalizedCollection = p.collection.toLowerCase().replace(/[^a-z0-9]/g, "")
       return normalizedCollection.includes(normalizedSlug) || normalizedSlug.includes(normalizedCollection)
@@ -74,6 +81,11 @@ export default function CategoryPage() {
 
     if (collectionFiltered.length > 0) {
       return collectionFiltered
+    }
+
+    // General fallback categories show all items (since they are all jewelry)
+    if (slug === "jewelry" || slug === "high-jewelry" || slug === "gifts") {
+      return products
     }
 
     // Otherwise show all products as a fallback

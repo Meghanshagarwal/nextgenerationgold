@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
+import { useSearchParams, useRouter } from "next/navigation"
 import { 
   Package, 
   Mail, 
@@ -10,62 +11,76 @@ import {
   Trash2, 
   Search, 
   LayoutDashboard, 
-  FileText, 
   ArrowLeft,
   X,
   CheckCircle,
   AlertTriangle,
-  Star
+  Star,
+  Tags,
+  ChevronRight,
+  Inbox
 } from "lucide-react"
 import { Product } from "@/lib/products"
 import { ContactSubmission } from "@/lib/db"
 
-export default function AdminPage() {
-  // Navigation tabs: 'overview' | 'products' | 'contacts'
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "contacts">("overview")
+type Category = {
+  id: string | number
+  name: string
+  slug: string
+}
+
+type Tag = {
+  id: string | number
+  name: string
+  slug: string
+}
+
+function AdminPageContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab") as any
+  
+  // Navigation tabs: 'overview' | 'products' | 'categories_tags' | 'contacts'
+  const [activeTab, setActiveTab] = useState<"overview" | "products" | "categories_tags" | "contacts">("overview")
   const [products, setProducts] = useState<Product[]>([])
   const [contacts, setContacts] = useState<ContactSubmission[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [tags, setTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   
-  // Modals state
-  const [productModalOpen, setProductModalOpen] = useState(false)
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
-  const [deletingProductSlug, setDeletingProductSlug] = useState<string | null>(null)
+  // Categories & Tags Form States
+  const [newCatName, setNewCatName] = useState("")
+  const [newTagName, setNewTagName] = useState("")
+  const [catTagError, setCatTagError] = useState("")
+  const [catTagSuccess, setCatTagSuccess] = useState("")
   
-  // Form State
-  const [formError, setFormError] = useState("")
-  const [formSuccess, setFormSuccess] = useState("")
-  const [submitting, setSubmitting] = useState(false)
-  const [formData, setFormData] = useState({
-    name: "",
-    collection: "",
-    price: "",
-    description: "",
-    material: "",
-    image: "",
-    details: "",
-    sku: "",
-    featured: true
-  })
-
-  // Selected contact for detail view modal
+  // Modals state
+  const [deletingProductSlug, setDeletingProductSlug] = useState<string | null>(null)
   const [selectedContact, setSelectedContact] = useState<ContactSubmission | null>(null)
 
-  // Fetch all products and contacts
+  // Sync with search parameter tab on load
+  useEffect(() => {
+    if (tabParam && ["overview", "products", "categories_tags", "contacts"].includes(tabParam)) {
+      setActiveTab(tabParam)
+    }
+  }, [tabParam])
+
+  // Fetch all database registry items
   const loadData = async () => {
     setLoading(true)
     try {
-      const [prodRes, conRes] = await Promise.all([
+      const [prodRes, conRes, catRes, tagRes] = await Promise.all([
         fetch("/api/products"),
-        fetch("/api/contacts")
+        fetch("/api/contacts"),
+        fetch("/api/categories"),
+        fetch("/api/tags")
       ])
-      if (prodRes.ok) {
-        setProducts(await prodRes.json())
-      }
-      if (conRes.ok) {
-        setContacts(await conRes.json())
-      }
+      
+      if (prodRes.ok) setProducts(await prodRes.json())
+      if (conRes.ok) setContacts(await conRes.json())
+      if (catRes.ok) setCategories(await catRes.json())
+      if (tagRes.ok) setTags(await tagRes.json())
     } catch (e) {
       console.error("Failed to load admin data:", e)
     } finally {
@@ -76,81 +91,6 @@ export default function AdminPage() {
   useEffect(() => {
     loadData()
   }, [])
-
-  // Open modal to add product
-  const handleOpenAddModal = () => {
-    setEditingProduct(null)
-    setFormData({
-      name: "",
-      collection: "Signature Collection",
-      price: "₹",
-      description: "",
-      material: "",
-      image: "/images/prod-bracelet-yellow.png", // prefilled premium asset
-      details: "",
-      sku: "",
-      featured: true
-    })
-    setFormError("")
-    setFormSuccess("")
-    setProductModalOpen(true)
-  }
-
-  // Open modal to edit product
-  const handleOpenEditModal = (product: Product) => {
-    setEditingProduct(product)
-    setFormData({
-      name: product.name,
-      collection: product.collection,
-      price: product.price,
-      description: product.description,
-      material: product.material,
-      image: product.image,
-      details: product.details.join("\n"),
-      sku: product.sku,
-      featured: product.featured !== false
-    })
-    setFormError("")
-    setFormSuccess("")
-    setProductModalOpen(true)
-  }
-
-  // Submit Add / Edit Product
-  const handleProductSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSubmitting(true)
-    setFormError("")
-    
-    const url = editingProduct 
-      ? `/api/products/${editingProduct.slug}`
-      : "/api/products"
-    
-    const method = editingProduct ? "PUT" : "POST"
-
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      })
-
-      if (res.ok) {
-        setFormSuccess(editingProduct ? "Product updated successfully!" : "Product added successfully!")
-        await loadData()
-        setTimeout(() => {
-          setProductModalOpen(false)
-          setFormSuccess("")
-        }, 1500)
-      } else {
-        const err = await res.json()
-        setFormError(err.error || "An error occurred. Please check details.")
-      }
-    } catch (e) {
-      setFormError("Failed to save product. Please try again.")
-    } finally {
-      setSubmitting(false)
-    }
-  }
 
   // Confirm Delete Product
   const handleDeleteProduct = async () => {
@@ -166,6 +106,94 @@ export default function AdminPage() {
     } catch (e) {
       console.error(e)
     }
+  }
+
+  // Manage Categories & Tags Action Handlers
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newCatName.trim()) return
+    setCatTagError("")
+    setCatTagSuccess("")
+    
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newCatName.trim() })
+      })
+      
+      if (res.ok) {
+        setCatTagSuccess("Category added successfully!")
+        setNewCatName("")
+        const catData = await fetch("/api/categories").then(r => r.json())
+        setCategories(catData)
+        setTimeout(() => setCatTagSuccess(""), 2000)
+      } else {
+        const err = await res.json()
+        setCatTagError(err.error || "Failed to create category")
+      }
+    } catch (e) {
+      setCatTagError("Network error. Please try again.")
+    }
+  }
+
+  const handleDeleteCategory = async (id: string | number) => {
+    if (!confirm("Are you sure you want to delete this category? Products associated with it will lose their category association.")) return
+    try {
+      const res = await fetch(`/api/categories/${id}`, { method: "DELETE" })
+      if (res.ok) {
+        const catData = await fetch("/api/categories").then(r => r.json())
+        setCategories(catData)
+      }
+    } catch (e) {
+      console.error("Failed to delete category", e)
+    }
+  }
+
+  const handleAddTag = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newTagName.trim()) return
+    setCatTagError("")
+    setCatTagSuccess("")
+    
+    try {
+      const res = await fetch("/api/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newTagName.trim() })
+      })
+      
+      if (res.ok) {
+        setCatTagSuccess("Tag added successfully!")
+        setNewTagName("")
+        const tagData = await fetch("/api/tags").then(r => r.json())
+        setTags(tagData)
+        setTimeout(() => setCatTagSuccess(""), 2000)
+      } else {
+        const err = await res.json()
+        setCatTagError(err.error || "Failed to create tag")
+      }
+    } catch (e) {
+      setCatTagError("Network error. Please try again.")
+    }
+  }
+
+  const handleDeleteTag = async (id: string | number) => {
+    if (!confirm("Are you sure you want to delete this tag?")) return
+    try {
+      const res = await fetch(`/api/tags/${id}`, { method: "DELETE" })
+      if (res.ok) {
+        const tagData = await fetch("/api/tags").then(r => r.json())
+        setTags(tagData)
+      }
+    } catch (e) {
+      console.error("Failed to delete tag", e)
+    }
+  }
+
+  const handleTabChange = (tab: "overview" | "products" | "categories_tags" | "contacts") => {
+    setActiveTab(tab)
+    router.replace(`/admin?tab=${tab}`)
   }
 
   // Filtered products list
@@ -200,7 +228,7 @@ export default function AdminPage() {
         <aside className="w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-[#EAEAEA] bg-white p-6 flex flex-col gap-6">
           <nav className="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0">
             <button
-              onClick={() => setActiveTab("overview")}
+              onClick={() => handleTabChange("overview")}
               className={`flex items-center gap-3 px-4 py-3 text-xs font-semibold tracking-wider uppercase transition-all duration-300 w-full rounded-md ${
                 activeTab === "overview" 
                   ? "bg-[#FAF6F0] text-[#9A7B4F] border-l-2 border-[#9A7B4F]" 
@@ -211,7 +239,7 @@ export default function AdminPage() {
               Overview
             </button>
             <button
-              onClick={() => setActiveTab("products")}
+              onClick={() => handleTabChange("products")}
               className={`flex items-center gap-3 px-4 py-3 text-xs font-semibold tracking-wider uppercase transition-all duration-300 w-full rounded-md ${
                 activeTab === "products" 
                   ? "bg-[#FAF6F0] text-[#9A7B4F] border-l-2 border-[#9A7B4F]" 
@@ -222,7 +250,18 @@ export default function AdminPage() {
               Products
             </button>
             <button
-              onClick={() => setActiveTab("contacts")}
+              onClick={() => handleTabChange("categories_tags")}
+              className={`flex items-center gap-3 px-4 py-3 text-xs font-semibold tracking-wider uppercase transition-all duration-300 w-full rounded-md ${
+                activeTab === "categories_tags" 
+                  ? "bg-[#FAF6F0] text-[#9A7B4F] border-l-2 border-[#9A7B4F]" 
+                  : "text-muted-foreground hover:bg-[#F9F9F9] hover:text-[#1C1C1C]"
+              }`}
+            >
+              <Tags className="h-4 w-4" strokeWidth={1.5} />
+              Categories & Tags
+            </button>
+            <button
+              onClick={() => handleTabChange("contacts")}
               className={`flex items-center gap-3 px-4 py-3 text-xs font-semibold tracking-wider uppercase transition-all duration-300 w-full rounded-md ${
                 activeTab === "contacts" 
                   ? "bg-[#FAF6F0] text-[#9A7B4F] border-l-2 border-[#9A7B4F]" 
@@ -258,41 +297,52 @@ export default function AdminPage() {
                   </div>
 
                   {/* Summary Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="border border-[#EAEAEA] bg-white p-6 rounded-lg shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center justify-between">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="border border-[#EAEAEA] bg-white p-6 rounded shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center justify-between">
                       <div>
                         <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-semibold">Product Registry</p>
                         <h3 className="font-serif text-4xl text-[#1C1C1C] mt-2 font-semibold">{products.length}</h3>
                         <p className="text-[10px] text-muted-foreground mt-2 font-medium">Active SKUs cataloged</p>
                       </div>
-                      <div className="h-12 w-12 rounded-full bg-[#FAF6F0] text-[#9A7B4F] flex items-center justify-center">
+                      <div className="h-12 w-12 rounded-full bg-[#FAF6F0] text-[#9A7B4F] flex items-center justify-center flex-none">
                         <Package className="h-6 w-6" strokeWidth={1.5} />
                       </div>
                     </div>
 
-                    <div className="border border-[#EAEAEA] bg-white p-6 rounded-lg shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center justify-between">
+                    <div className="border border-[#EAEAEA] bg-white p-6 rounded shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-semibold">Categories & Tags</p>
+                        <h3 className="font-serif text-4xl text-[#1C1C1C] mt-2 font-semibold">{categories.length + tags.length}</h3>
+                        <p className="text-[10px] text-muted-foreground mt-2 font-medium">{categories.length} categories, {tags.length} tags</p>
+                      </div>
+                      <div className="h-12 w-12 rounded-full bg-[#FAF6F0] text-[#9A7B4F] flex items-center justify-center flex-none">
+                        <Tags className="h-6 w-6" strokeWidth={1.5} />
+                      </div>
+                    </div>
+
+                    <div className="border border-[#EAEAEA] bg-white p-6 rounded shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center justify-between">
                       <div>
                         <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-semibold">Client Inquiries</p>
                         <h3 className="font-serif text-4xl text-[#1C1C1C] mt-2 font-semibold">{contacts.length}</h3>
                         <p className="text-[10px] text-muted-foreground mt-2 font-medium">Forms submitted by clients</p>
                       </div>
-                      <div className="h-12 w-12 rounded-full bg-[#FAF6F0] text-[#9A7B4F] flex items-center justify-center">
+                      <div className="h-12 w-12 rounded-full bg-[#FAF6F0] text-[#9A7B4F] flex items-center justify-center flex-none">
                         <Mail className="h-6 w-6" strokeWidth={1.5} />
                       </div>
                     </div>
                   </div>
 
                   {/* Recent Messages Preview */}
-                  <div className="border border-[#EAEAEA] bg-white p-6 rounded-lg shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+                  <div className="border border-[#EAEAEA] bg-white p-6 rounded shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
                     <div className="flex items-center justify-between mb-6">
                       <h4 className="font-serif text-lg text-[#1C1C1C] tracking-wide font-semibold">Recent Inquiries</h4>
-                      <button onClick={() => setActiveTab("contacts")} className="text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-[#9A7B4F] transition-colors">
+                      <button onClick={() => handleTabChange("contacts")} className="text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-[#9A7B4F] transition-colors">
                         View All
                       </button>
                     </div>
 
                     {contacts.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-6">No client messages received yet.</p>
+                      <p className="text-sm text-muted-foreground text-center py-6 font-medium">No client messages received yet.</p>
                     ) : (
                       <div className="divide-y divide-[#EAEAEA]">
                         {contacts.slice(0, 3).map((submission) => (
@@ -327,13 +377,13 @@ export default function AdminPage() {
                       <h2 className="font-serif text-3xl text-[#1C1C1C] tracking-wide">Products Inventory</h2>
                       <p className="text-xs text-muted-foreground mt-1 font-medium">Manage luxury products available on site.</p>
                     </div>
-                    <button
-                      onClick={handleOpenAddModal}
+                    <Link
+                      href="/admin/products/add"
                       className="flex items-center justify-center gap-2 bg-[#9A7B4F] hover:bg-[#856941] text-white px-6 py-3.5 text-xs font-semibold uppercase tracking-widest transition-colors duration-300 rounded shadow-xs"
                     >
                       <Plus className="h-4 w-4" strokeWidth={2} />
                       Add Product
-                    </button>
+                    </Link>
                   </div>
 
                   {/* Search Bar */}
@@ -357,6 +407,7 @@ export default function AdminPage() {
                             <th className="p-4 font-bold">Product</th>
                             <th className="p-4 font-bold">SKU</th>
                             <th className="p-4 font-bold">Collection</th>
+                            <th className="p-4 font-bold">Category</th>
                             <th className="p-4 font-bold">Price</th>
                             <th className="p-4 font-bold text-right">Actions</th>
                           </tr>
@@ -364,7 +415,7 @@ export default function AdminPage() {
                         <tbody className="divide-y divide-[#EAEAEA]">
                           {filteredProducts.length === 0 ? (
                             <tr>
-                              <td colSpan={5} className="p-8 text-center text-muted-foreground font-medium">No products found matching your search.</td>
+                              <td colSpan={6} className="p-8 text-center text-muted-foreground font-medium">No products found matching your search.</td>
                             </tr>
                           ) : (
                             filteredProducts.map((p) => (
@@ -385,16 +436,17 @@ export default function AdminPage() {
                                 </td>
                                 <td className="p-4 font-mono text-xs font-semibold text-muted-foreground">{p.sku}</td>
                                 <td className="p-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{p.collection}</td>
+                                <td className="p-4 text-xs font-semibold text-muted-foreground">{p.category || "—"}</td>
                                 <td className="p-4 font-serif text-sm font-bold text-[#9A7B4F]">{p.price}</td>
                                 <td className="p-4 text-right">
                                   <div className="flex items-center justify-end gap-3">
-                                    <button
-                                      onClick={() => handleOpenEditModal(p)}
+                                    <Link
+                                      href={`/admin/products/edit/${p.slug}`}
                                       className="p-2 text-muted-foreground hover:text-[#9A7B4F] hover:bg-[#FAF6F0] rounded transition-all"
                                       title="Edit Product"
                                     >
                                       <Edit className="h-4 w-4" strokeWidth={1.5} />
-                                    </button>
+                                    </Link>
                                     <button
                                       onClick={() => setDeletingProductSlug(p.slug)}
                                       className="p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded transition-all"
@@ -409,6 +461,131 @@ export default function AdminPage() {
                           )}
                         </tbody>
                       </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ========== CATEGORIES & TAGS MANAGER ========== */}
+              {activeTab === "categories_tags" && (
+                <div className="flex flex-col gap-8">
+                  <div>
+                    <h2 className="font-serif text-3xl text-[#1C1C1C] tracking-wide">Categories & Tags Manager</h2>
+                    <p className="text-xs text-muted-foreground mt-1 font-medium">Create and delete global categories and tags dynamically selectable inside forms.</p>
+                  </div>
+
+                  {catTagError && (
+                    <div className="p-4 bg-red-50 border border-red-100 text-red-700 text-xs flex items-center gap-2 rounded font-medium shadow-xs">
+                      <AlertTriangle className="h-4 w-4 flex-none" />
+                      {catTagError}
+                    </div>
+                  )}
+
+                  {catTagSuccess && (
+                    <div className="p-4 bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs flex items-center gap-2 rounded font-medium shadow-xs">
+                      <CheckCircle className="h-4 w-4 flex-none" />
+                      {catTagSuccess}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
+                    {/* CATEGORY MANAGER CARD */}
+                    <div className="border border-[#EAEAEA] bg-white p-6 rounded shadow-xs flex flex-col gap-6">
+                      <div>
+                        <h3 className="font-serif text-lg text-[#1C1C1C] font-semibold">Product Categories</h3>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mt-0.5">Filter collections on listing pages</p>
+                      </div>
+
+                      {/* Add Form */}
+                      <form onSubmit={handleAddCategory} className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Add new category (e.g. Rings)..."
+                          value={newCatName}
+                          onChange={(e) => setNewCatName(e.target.value)}
+                          className="flex-1 bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                        />
+                        <button
+                          type="submit"
+                          className="bg-[#9A7B4F] hover:bg-[#856941] text-white px-4 py-2 text-xs font-semibold uppercase tracking-widest transition-colors rounded shadow-xs flex items-center gap-1.5"
+                        >
+                          <Plus className="h-3.5 w-3.5" /> Add
+                        </button>
+                      </form>
+
+                      {/* Categories List */}
+                      <div className="border border-[#EAEAEA] rounded divide-y divide-[#EAEAEA] max-h-[400px] overflow-y-auto">
+                        {categories.length === 0 ? (
+                          <p className="text-xs text-muted-foreground p-4 text-center font-medium">No categories registered.</p>
+                        ) : (
+                          categories.map(cat => (
+                            <div key={cat.id} className="p-3 flex items-center justify-between hover:bg-[#FAF9F6] transition-colors">
+                              <div>
+                                <p className="text-xs font-semibold text-[#1C1C1C]">{cat.name}</p>
+                                <p className="text-[9px] font-mono text-muted-foreground mt-0.5">slug: {cat.slug}</p>
+                              </div>
+                              <button
+                                onClick={() => handleDeleteCategory(cat.id)}
+                                className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded transition-all"
+                                title="Delete Category"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* TAGS MANAGER CARD */}
+                    <div className="border border-[#EAEAEA] bg-white p-6 rounded shadow-xs flex flex-col gap-6">
+                      <div>
+                        <h3 className="font-serif text-lg text-[#1C1C1C] font-semibold">Product Tags</h3>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mt-0.5">SEO and metal quality metadata</p>
+                      </div>
+
+                      {/* Add Form */}
+                      <form onSubmit={handleAddTag} className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Add new tag (e.g. Platinum)..."
+                          value={newTagName}
+                          onChange={(e) => setNewTagName(e.target.value)}
+                          className="flex-1 bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                        />
+                        <button
+                          type="submit"
+                          className="bg-[#9A7B4F] hover:bg-[#856941] text-white px-4 py-2 text-xs font-semibold uppercase tracking-widest transition-colors rounded shadow-xs flex items-center gap-1.5"
+                        >
+                          <Plus className="h-3.5 w-3.5" /> Add
+                        </button>
+                      </form>
+
+                      {/* Tags Cloud / List */}
+                      <div className="border border-[#EAEAEA] bg-[#FAF9F6] p-4 rounded min-h-[150px] max-h-[400px] overflow-y-auto">
+                        {tags.length === 0 ? (
+                          <p className="text-xs text-muted-foreground text-center p-6 font-medium">No tags registered.</p>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {tags.map(t => (
+                              <span 
+                                key={t.id} 
+                                className="inline-flex items-center gap-1.5 bg-white border border-[#EAEAEA] pl-3 pr-1 py-1 rounded-full text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shadow-xs hover:border-[#9A7B4F] transition-colors"
+                              >
+                                {t.name}
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteTag(t.id)}
+                                  className="h-4.5 w-4.5 rounded-full hover:bg-red-50 hover:text-red-600 flex items-center justify-center transition-all"
+                                  title="Delete Tag"
+                                >
+                                  <X className="h-2.5 w-2.5" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -464,165 +641,6 @@ export default function AdminPage() {
           )}
         </section>
       </div>
-
-      {/* ===== EDIT/ADD PRODUCT MODAL ===== */}
-      {productModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-xs" onClick={() => setProductModalOpen(false)} />
-          <div className="relative z-10 w-full max-w-2xl bg-white p-8 border border-[#EAEAEA] shadow-2xl rounded max-h-[90vh] overflow-y-auto">
-            <button 
-              onClick={() => setProductModalOpen(false)}
-              className="absolute right-6 top-6 text-muted-foreground hover:text-[#9A7B4F] transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            <h3 className="font-serif text-2xl text-[#1C1C1C] tracking-wide mb-6 font-semibold border-b border-[#F5F5F5] pb-4">
-              {editingProduct ? "Edit Luxury Product" : "Register New Product"}
-            </h3>
-
-            {formError && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-700 text-xs flex items-center gap-2 rounded font-medium">
-                <AlertTriangle className="h-4 w-4 flex-none" />
-                {formError}
-              </div>
-            )}
-
-            {formSuccess && (
-              <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs flex items-center gap-2 rounded font-medium">
-                <CheckCircle className="h-4 w-4 flex-none" />
-                {formSuccess}
-              </div>
-            )}
-
-            <form onSubmit={handleProductSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Product Name</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
-                  placeholder="e.g. T1 Smile Pendant"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Collection Category</label>
-                <select
-                  value={formData.collection}
-                  onChange={(e) => setFormData(prev => ({ ...prev, collection: e.target.value }))}
-                  className="w-full bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
-                >
-                  <option value="Signature Collection">Signature Collection</option>
-                  <option value="HardWear">HardWear</option>
-                  <option value="Smile">Smile</option>
-                  <option value="T1">T1</option>
-                  <option value="Lock">Lock</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Price</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                  className="w-full bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
-                  placeholder="e.g. ₹4,200"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Material</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.material}
-                  onChange={(e) => setFormData(prev => ({ ...prev, material: e.target.value }))}
-                  className="w-full bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
-                  placeholder="e.g. 18k Rose Gold"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Image URL</label>
-                <input
-                  type="text"
-                  value={formData.image}
-                  onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
-                  className="w-full bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
-                  placeholder="Image path e.g. /images/..."
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">SKU Number</label>
-                <input
-                  type="text"
-                  value={formData.sku}
-                  onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
-                  className="w-full bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
-                  placeholder="Leave empty for auto-generated"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5 md:col-span-2 py-1">
-                <label className="flex items-center gap-3 text-xs uppercase tracking-widest font-bold text-[#1C1C1C] cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={formData.featured}
-                    onChange={(e) => setFormData(prev => ({ ...prev, featured: e.target.checked }))}
-                    className="h-4.5 w-4.5 border-[#EAEAEA] bg-[#F9F9F9] accent-[#9A7B4F] rounded focus:ring-0 cursor-pointer"
-                  />
-                  <span>Feature on Homepage Slider (Feature It)</span>
-                </label>
-              </div>
-
-              <div className="flex flex-col gap-1.5 md:col-span-2">
-                <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Description Details</label>
-                <textarea
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C] resize-none"
-                  placeholder="Explain the item's luxury highlights..."
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5 md:col-span-2">
-                <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Features (One item per line)</label>
-                <textarea
-                  rows={4}
-                  value={formData.details}
-                  onChange={(e) => setFormData(prev => ({ ...prev, details: e.target.value }))}
-                  className="w-full bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C] resize-none"
-                  placeholder="e.g.&#10;18k gold&#10;Adjustable chain 16-18 inches&#10;Lobster clasp closure"
-                />
-              </div>
-
-              <div className="md:col-span-2 flex gap-4 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setProductModalOpen(false)}
-                  className="flex-1 border border-[#EAEAEA] hover:bg-[#F9F9F9] text-[#1C1C1C] py-4 text-xs font-semibold uppercase tracking-widest transition-colors duration-300 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 bg-[#9A7B4F] hover:bg-[#856941] text-white py-4 text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-90 disabled:opacity-50 duration-300 rounded shadow-xs"
-                >
-                  {submitting ? "Saving SKU..." : "Save Product"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* ===== DELETE PRODUCT CONFIRM MODAL ===== */}
       {deletingProductSlug && (
@@ -717,5 +735,17 @@ export default function AdminPage() {
         </div>
       )}
     </main>
+  )
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6]">
+        <div className="h-10 w-10 animate-spin rounded-full border-t-2 border-[#9A7B4F] border-r-2 border-r-transparent" />
+      </div>
+    }>
+      <AdminPageContent />
+    </Suspense>
   )
 }
