@@ -128,6 +128,46 @@ export function ImageUploader({ value, onSelect, label = "Image", required = fal
     }
   }
 
+  const handleDeleteMultipleImages = async () => {
+    if (selectedList.length === 0) return
+
+    const confirmMsg = `Are you sure you want to permanently delete these ${selectedList.length} selected images from your Media Library? This action cannot be undone.`
+    if (!window.confirm(confirmMsg)) {
+      return
+    }
+
+    setLoading(true)
+    let failedCount = 0
+
+    try {
+      await Promise.all(
+        selectedList.map(async (item) => {
+          try {
+            const res = await fetch(`/api/media?id=${item.id}`, {
+              method: "DELETE"
+            })
+            if (!res.ok) {
+              failedCount++
+            }
+          } catch (_) {
+            failedCount++
+          }
+        })
+      )
+
+      if (failedCount > 0) {
+        alert(`Finished bulk delete operations. ${failedCount} of the selected images failed to delete.`)
+      }
+
+      setSelectedList([])
+      fetchImages(page, search)
+    } catch (e: any) {
+      alert("Bulk delete operations failed due to a network communication issue.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleConfirm = () => {
     if (multiple) {
       if (selectedList.length > 0) {
@@ -376,9 +416,16 @@ export function ImageUploader({ value, onSelect, label = "Image", required = fal
                           <button
                             type="button"
                             onClick={() => setSelectedList([])}
-                            className="text-xs text-red-500 hover:text-red-700 underline font-semibold px-2"
+                            className="text-xs text-muted-foreground hover:text-foreground underline font-semibold px-2"
                           >
                             Clear
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDeleteMultipleImages}
+                            className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 px-3 py-1.5 text-[9px] uppercase font-bold tracking-wider rounded transition-colors shrink-0"
+                          >
+                            Delete Selected
                           </button>
                         </div>
                       ) : (
