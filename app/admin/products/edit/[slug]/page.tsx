@@ -477,13 +477,15 @@ export default function EditProductPage() {
                 )}
 
                 <ImageUploader
-                  label="Select Gallery Image to Add"
+                  label="Select Gallery Images to Add"
                   value=""
-                  onSelect={(url) => {
-                    if (url) {
+                  multiple={true}
+                  onSelect={(urls) => {
+                    if (urls) {
+                      const newUrls = Array.isArray(urls) ? urls : [urls]
                       setFormData(prev => ({
                         ...prev,
-                        images: [...(prev.images || []), url]
+                        images: [...(prev.images || []), ...newUrls]
                       }))
                     }
                   }}

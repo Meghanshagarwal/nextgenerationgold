@@ -14,13 +14,14 @@ type WPImage = {
 }
 
 type Props = {
-  value: string
-  onSelect: (url: string) => void
+  value: string | string[]
+  onSelect: (url: any) => void
   label?: string
   required?: boolean
+  multiple?: boolean
 }
 
-export function ImageUploader({ value, onSelect, label = "Image", required = false }: Props) {
+export function ImageUploader({ value, onSelect, label = "Image", required = false, multiple = false }: Props) {
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<"library" | "upload">("library")
 
@@ -32,6 +33,7 @@ export function ImageUploader({ value, onSelect, label = "Image", required = fal
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [selected, setSelected] = useState<WPImage | null>(null)
+  const [selectedList, setSelectedList] = useState<WPImage[]>([])
 
   // Upload state
   const [uploading, setUploading] = useState(false)
@@ -127,16 +129,25 @@ export function ImageUploader({ value, onSelect, label = "Image", required = fal
   }
 
   const handleConfirm = () => {
-    if (selected) {
-      onSelect(selected.url)
-      setOpen(false)
-      setSelected(null)
+    if (multiple) {
+      if (selectedList.length > 0) {
+        onSelect(selectedList.map(img => img.url))
+        setOpen(false)
+        setSelectedList([])
+      }
+    } else {
+      if (selected) {
+        onSelect(selected.url)
+        setOpen(false)
+        setSelected(null)
+      }
     }
   }
 
   const handleClose = () => {
     setOpen(false)
     setSelected(null)
+    setSelectedList([])
     setSearch("")
     setUploadError("")
     setUploadSuccess("")
@@ -285,33 +296,52 @@ export function ImageUploader({ value, onSelect, label = "Image", required = fal
                     </div>
                   ) : (
                     <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-2">
-                      {images.map((img) => (
-                        <button
-                          key={img.id}
-                          type="button"
-                          onClick={() => setSelected(img.id === selected?.id ? null : img)}
-                          className={`relative aspect-square rounded overflow-hidden border-2 transition-all group ${
-                            selected?.id === img.id
-                              ? "border-[#9A7B4F] ring-2 ring-[#9A7B4F]/30 scale-[0.97]"
-                              : "border-[#EAEAEA] hover:border-[#9A7B4F]/50"
-                          }`}
-                        >
-                          <img
-                            src={img.thumbnail || img.url}
-                            alt={img.title}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                          {selected?.id === img.id && (
-                            <div className="absolute inset-0 bg-[#9A7B4F]/20 flex items-center justify-center">
-                              <div className="bg-[#9A7B4F] rounded-full p-1">
-                                <Check className="h-3 w-3 text-white" />
+                      {images.map((img) => {
+                        const isSelected = multiple
+                          ? selectedList.some((item) => item.id === img.id)
+                          : selected?.id === img.id
+
+                        const handleSelectClick = () => {
+                          if (multiple) {
+                            const exists = selectedList.some((item) => item.id === img.id)
+                            if (exists) {
+                              setSelectedList(selectedList.filter((item) => item.id !== img.id))
+                            } else {
+                              setSelectedList([...selectedList, img])
+                            }
+                          } else {
+                            setSelected(selected?.id === img.id ? null : img)
+                          }
+                        }
+
+                        return (
+                          <button
+                            key={img.id}
+                            type="button"
+                            onClick={handleSelectClick}
+                            className={`relative aspect-square rounded overflow-hidden border-2 transition-all group ${
+                              isSelected
+                                ? "border-[#9A7B4F] ring-2 ring-[#9A7B4F]/30 scale-[0.97]"
+                                : "border-[#EAEAEA] hover:border-[#9A7B4F]/50"
+                            }`}
+                          >
+                            <img
+                              src={img.thumbnail || img.url}
+                              alt={img.title}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                            {isSelected && (
+                              <div className="absolute inset-0 bg-[#9A7B4F]/20 flex items-center justify-center">
+                                <div className="bg-[#9A7B4F] rounded-full p-1">
+                                  <Check className="h-3 w-3 text-white" />
+                                </div>
                               </div>
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                        </button>
-                      ))}
+                            )}
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                          </button>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
@@ -319,7 +349,42 @@ export function ImageUploader({ value, onSelect, label = "Image", required = fal
                 {/* Selected image info + pagination */}
                 <div className="px-6 py-3 border-t border-[#EAEAEA] shrink-0 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    {selected ? (
+                    {multiple ? (
+                      selectedList.length > 0 ? (
+                        <div className="flex items-center gap-3">
+                          <div className="flex -space-x-3 overflow-hidden shrink-0">
+                            {selectedList.slice(0, 3).map((item, idx) => (
+                              <img
+                                key={item.id}
+                                src={item.thumbnail}
+                                alt=""
+                                className="h-8 w-8 object-cover rounded border border-[#EAEAEA] ring-2 ring-white"
+                              />
+                            ))}
+                            {selectedList.length > 3 && (
+                              <div className="flex items-center justify-center h-8 w-8 rounded bg-[#FAF9F6] border border-[#EAEAEA] text-[9px] font-bold text-muted-foreground ring-2 ring-white shrink-0">
+                                +{selectedList.length - 3}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-[#1C1C1C]">{selectedList.length} selected</p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {selectedList.map((item) => item.title).join(", ")}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedList([])}
+                            className="text-xs text-red-500 hover:text-red-700 underline font-semibold px-2"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground font-medium">Select images from the library</p>
+                      )
+                    ) : selected ? (
                       <div className="flex items-center gap-3">
                         <img src={selected.thumbnail} alt="" className="h-10 w-10 object-cover rounded border border-[#EAEAEA]" />
                         <div className="min-w-0 flex-1">
@@ -364,11 +429,11 @@ export function ImageUploader({ value, onSelect, label = "Image", required = fal
 
                   <button
                     type="button"
-                    disabled={!selected}
+                    disabled={multiple ? selectedList.length === 0 : !selected}
                     onClick={handleConfirm}
                     className="bg-[#9A7B4F] hover:bg-[#856941] disabled:opacity-40 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors shrink-0"
                   >
-                    Use Selected Image
+                    {multiple ? "Use Selected Images" : "Use Selected Image"}
                   </button>
                 </div>
               </div>
