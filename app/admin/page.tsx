@@ -19,7 +19,8 @@ import {
   Tags,
   ChevronRight,
   Inbox,
-  Info
+  Info,
+  Home
 } from "lucide-react"
 import { ImageUploader } from "@/components/image-uploader"
 import { Product } from "@/lib/products"
