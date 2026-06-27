@@ -20,6 +20,15 @@ export default function CategoryPage() {
     bannerTitle: string
     bannerSubtitle: string
   } | null>(null)
+  const [jewelrySettings, setJewelrySettings] = useState<{
+    cards: Array<{
+      id: number
+      image: string
+      title: string
+      targetCategory: string
+    }>
+  } | null>(null)
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null)
 
   // Filters State
   const [selectedCollections, setSelectedCollections] = useState<string[]>([])
@@ -43,6 +52,29 @@ export default function CategoryPage() {
       }
       fetchHighJewelry()
     }
+  }, [slug])
+
+  // Fetch Jewelry Settings
+  useEffect(() => {
+    if (slug === "jewelry") {
+      async function fetchJewelrySettings() {
+        try {
+          const res = await fetch("/api/jewelry-page", { cache: "no-store" })
+          if (res.ok) {
+            const data = await res.json()
+            setJewelrySettings(data)
+          }
+        } catch (e) {
+          console.error("Failed to load jewelry settings:", e)
+        }
+      }
+      fetchJewelrySettings()
+    }
+  }, [slug])
+
+  // Reset subcategory filter when switching category pages
+  useEffect(() => {
+    setSelectedSubCategory(null)
   }, [slug])
 
   // Fetch products
@@ -139,6 +171,16 @@ export default function CategoryPage() {
   const processedProducts = useMemo(() => {
     let result = [...categoryProducts]
 
+    // 0. Sub-category Filter (from 4 jewelry page settings cards)
+    if (selectedSubCategory) {
+      const sub = selectedSubCategory.toLowerCase().replace(/[^a-z0-9]/g, "")
+      result = result.filter(p => {
+        if (!p.category) return false
+        const cat = p.category.toLowerCase().replace(/[^a-z0-9]/g, "")
+        return cat.includes(sub) || sub.includes(cat)
+      })
+    }
+
     // 1. Collection Filter
     if (selectedCollections.length > 0) {
       result = result.filter(p => selectedCollections.includes(p.collection))
@@ -195,7 +237,66 @@ export default function CategoryPage() {
       <NggHeader />
 
       {/* ===== CATEGORY HERO BANNER / EDITORIAL ===== */}
-      {slug === "high-jewelry" ? (
+      {slug === "jewelry" ? (
+        <section className="bg-background pt-12 pb-8 md:pt-16 text-center border-b border-border">
+          <div className="mx-auto max-w-[1200px] px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto mb-6">
+              {(jewelrySettings?.cards || [
+                {
+                  id: 1,
+                  image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&q=80",
+                  title: "NECKLACES",
+                  targetCategory: "necklaces"
+                },
+                {
+                  id: 2,
+                  image: "https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=400&q=80",
+                  title: "EARRINGS",
+                  targetCategory: "earrings"
+                },
+                {
+                  id: 3,
+                  image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=400&q=80",
+                  title: "BRACELETS",
+                  targetCategory: "bracelets"
+                },
+                {
+                  id: 4,
+                  image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=400&q=80",
+                  title: "RINGS",
+                  targetCategory: "rings"
+                }
+              ]).map((card: any) => {
+                const isSelected = selectedSubCategory === card.targetCategory
+                return (
+                  <button
+                    key={card.id}
+                    onClick={() => setSelectedSubCategory(prev => prev === card.targetCategory ? null : card.targetCategory)}
+                    className="flex flex-col items-center gap-3 group focus:outline-none"
+                  >
+                    <div className={`relative aspect-square w-full overflow-hidden bg-secondary border transition-all ${
+                      isSelected 
+                        ? "border-[#9A7B4F] ring-2 ring-[#9A7B4F]/30 scale-[0.98]" 
+                        : "border-transparent group-hover:border-[#9A7B4F]/40"
+                    }`}>
+                      <img 
+                        src={card.image} 
+                        alt={card.title}
+                        className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                    <span className={`text-[10px] md:text-xs font-bold tracking-widest uppercase transition-colors ${
+                      isSelected ? "text-[#9A7B4F]" : "text-muted-foreground group-hover:text-foreground"
+                    }`}>
+                      {card.title}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      ) : slug === "high-jewelry" ? (
         <section className="bg-background pt-12 pb-8 md:pt-16 text-center">
           <div className="mx-auto max-w-[1200px] px-6">
             <h1 className="font-serif text-4xl text-foreground md:text-5xl lg:text-6xl tracking-wide">

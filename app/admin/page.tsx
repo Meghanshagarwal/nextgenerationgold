@@ -42,8 +42,8 @@ function AdminPageContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab") as any
   
-  // Navigation tabs: 'overview' | 'products' | 'categories_tags' | 'contacts' | 'about_us' | 'high_jewelry'
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "categories_tags" | "contacts" | "about_us" | "high_jewelry">("overview")
+  // Navigation tabs: 'overview' | 'products' | 'categories_tags' | 'contacts' | 'about_us' | 'high_jewelry' | 'jewelry_page'
+  const [activeTab, setActiveTab] = useState<"overview" | "products" | "categories_tags" | "contacts" | "about_us" | "high_jewelry" | "jewelry_page">("overview")
   const [products, setProducts] = useState<Product[]>([])
   const [contacts, setContacts] = useState<ContactSubmission[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -73,6 +73,11 @@ function AdminPageContent() {
   const [highJewelry, setHighJewelry] = useState<any>(null)
   const [highJewelryError, setHighJewelryError] = useState("")
   const [highJewelrySuccess, setHighJewelrySuccess] = useState("")
+
+  // Jewelry category page settings states
+  const [jewelryPage, setJewelryPage] = useState<any>(null)
+  const [jewelryPageError, setJewelryPageError] = useState("")
+  const [jewelryPageSuccess, setJewelryPageSuccess] = useState("")
 
   const exportLeadsToCSV = () => {
     const leads = contacts.filter(c => c.type === "lead")
@@ -111,7 +116,7 @@ function AdminPageContent() {
 
   // Sync with search parameter tab on load
   useEffect(() => {
-    if (tabParam && ["overview", "products", "categories_tags", "contacts", "about_us"].includes(tabParam)) {
+    if (tabParam && ["overview", "products", "categories_tags", "contacts", "about_us", "high_jewelry", "jewelry_page"].includes(tabParam)) {
       setActiveTab(tabParam)
     }
   }, [tabParam])
@@ -120,13 +125,14 @@ function AdminPageContent() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [prodRes, conRes, catRes, tagRes, aboutRes, hjRes] = await Promise.all([
+      const [prodRes, conRes, catRes, tagRes, aboutRes, hjRes, jpRes] = await Promise.all([
         fetch("/api/products"),
         fetch("/api/contacts"),
         fetch("/api/categories"),
         fetch("/api/tags"),
         fetch("/api/about-us"),
-        fetch("/api/high-jewelry")
+        fetch("/api/high-jewelry"),
+        fetch("/api/jewelry-page")
       ])
       
       if (prodRes.ok) setProducts(await prodRes.json())
@@ -135,6 +141,7 @@ function AdminPageContent() {
       if (tagRes.ok) setTags(await tagRes.json())
       if (aboutRes.ok) setAboutUs(await aboutRes.json())
       if (hjRes.ok) setHighJewelry(await hjRes.json())
+      if (jpRes.ok) setJewelryPage(await jpRes.json())
     } catch (e) {
       console.error("Failed to load admin data:", e)
     } finally {
@@ -304,6 +311,33 @@ function AdminPageContent() {
     }
   }
 
+  const handleSaveJewelryPage = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setJewelryPageError("")
+    setJewelryPageSuccess("")
+    
+    try {
+      const res = await fetch("/api/jewelry-page", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(jewelryPage)
+      })
+      
+      if (res.ok) {
+        setJewelryPageSuccess("Jewelry page details updated successfully!")
+        setTimeout(() => setJewelryPageSuccess(""), 3000)
+      } else {
+        const err = await res.json()
+        const msg = err.fix
+          ? `${err.error}\n\nSQL Fix:\n${err.fix}`
+          : err.error || "Failed to update details"
+        setJewelryPageError(msg)
+      }
+    } catch (e) {
+      setJewelryPageError("Network error. Please try again.")
+    }
+  }
+
   // Filtered products list
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -405,6 +439,17 @@ function AdminPageContent() {
             >
               <Star className="h-4 w-4" strokeWidth={1.5} />
               High Jewelry Settings
+            </button>
+            <button
+              onClick={() => handleTabChange("jewelry_page")}
+              className={`flex items-center gap-3 px-4 py-3 text-xs font-semibold tracking-wider uppercase transition-all duration-300 w-full rounded-md ${
+                activeTab === "jewelry_page" 
+                  ? "bg-[#FAF6F0] text-[#9A7B4F] border-l-2 border-[#9A7B4F]" 
+                  : "text-muted-foreground hover:bg-[#F9F9F9] hover:text-[#1C1C1C]"
+              }`}
+            >
+              <Package className="h-4 w-4" strokeWidth={1.5} />
+              Jewelry Page Subcats
             </button>
           </nav>
         </aside>
@@ -1171,6 +1216,85 @@ function AdminPageContent() {
                       className="bg-[#9A7B4F] hover:bg-[#856941] text-white py-4 text-xs font-semibold uppercase tracking-widest mt-4 transition-colors duration-300 rounded shadow-xs"
                     >
                       Save High Jewelry Details
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {activeTab === "jewelry_page" && jewelryPage && (
+                <div className="flex flex-col gap-6 max-w-4xl">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-bold text-[#9A7B4F] uppercase tracking-widest">Settings Panel</span>
+                    <h2 className="font-serif text-2xl md:text-3xl text-[#1C1C1C] font-semibold tracking-wide">Jewelry Category Page Settings</h2>
+                    <p className="text-xs text-muted-foreground font-medium">Configure the 4 main sub-category grid cards shown at the top of the Jewelry category page.</p>
+                  </div>
+
+                  {jewelryPageSuccess && (
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs px-4 py-3 rounded font-semibold">
+                      {jewelryPageSuccess}
+                    </div>
+                  )}
+                  {jewelryPageError && (
+                    <div className="bg-red-50 border border-red-200 text-red-800 text-xs px-4 py-3 rounded font-semibold whitespace-pre-wrap font-mono leading-relaxed">
+                      {jewelryPageError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSaveJewelryPage} className="flex flex-col gap-8 bg-white border border-[#EAEAEA] p-8 rounded shadow-xs">
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {(jewelryPage.cards || []).map((card: any, idx: number) => (
+                        <div key={card.id} className="border border-[#FAF6F0] bg-[#FAF9F6] p-6 rounded flex flex-col gap-4">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-[#9A7B4F]">Card #{idx + 1}</h3>
+                          
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Display Title (e.g. NECKLACES)</label>
+                            <input
+                              type="text"
+                              value={card.title || ""}
+                              onChange={(e) => {
+                                const newCards = [...jewelryPage.cards]
+                                newCards[idx] = { ...card, title: e.target.value }
+                                setJewelryPage({ ...jewelryPage, cards: newCards })
+                              }}
+                              className="bg-white border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                              required
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Target Category Filter String (e.g. necklaces)</label>
+                            <input
+                              type="text"
+                              value={card.targetCategory || ""}
+                              onChange={(e) => {
+                                const newCards = [...jewelryPage.cards]
+                                newCards[idx] = { ...card, targetCategory: e.target.value }
+                                setJewelryPage({ ...jewelryPage, cards: newCards })
+                              }}
+                              className="bg-white border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                              required
+                            />
+                          </div>
+
+                          <ImageUploader
+                            label="Card Image"
+                            value={card.image || ""}
+                            onSelect={(url) => {
+                              const newCards = [...jewelryPage.cards]
+                              newCards[idx] = { ...card, image: url }
+                              setJewelryPage({ ...jewelryPage, cards: newCards })
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="bg-[#9A7B4F] hover:bg-[#856941] text-white py-4 text-xs font-semibold uppercase tracking-widest mt-4 transition-colors duration-300 rounded shadow-xs"
+                    >
+                      Save Jewelry Page Settings
                     </button>
                   </form>
                 </div>
