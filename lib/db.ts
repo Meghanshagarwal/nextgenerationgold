@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js"
 import { products as defaultProducts, Product } from "./products"
+import fs from "fs"
+import path from "path"
 
 let supabaseClient: any = null
 
@@ -167,11 +169,112 @@ export function mapProductToRow(p: Product) {
   }
 }
 
+const PRODUCTS_FILE = path.join(process.cwd(), "lib", "products.json")
+const CATEGORIES_FILE = path.join(process.cwd(), "lib", "categories.json")
+const TAGS_FILE = path.join(process.cwd(), "lib", "tags.json")
+const CONTACTS_FILE = path.join(process.cwd(), "lib", "contacts.json")
+
+function readProductsLocal(): Product[] {
+  try {
+    if (fs.existsSync(PRODUCTS_FILE)) {
+      return JSON.parse(fs.readFileSync(PRODUCTS_FILE, "utf-8"))
+    }
+  } catch (e) {
+    console.error("Error reading local products:", e)
+  }
+  writeProductsLocal(defaultProducts)
+  return defaultProducts
+}
+
+function writeProductsLocal(products: Product[]) {
+  try {
+    fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2), "utf-8")
+  } catch (e) {
+    console.error("Error writing local products:", e)
+  }
+}
+
+function readCategoriesLocal(): Category[] {
+  try {
+    if (fs.existsSync(CATEGORIES_FILE)) {
+      return JSON.parse(fs.readFileSync(CATEGORIES_FILE, "utf-8"))
+    }
+  } catch (e) {
+    console.error("Error reading local categories:", e)
+  }
+  const defaults = [
+    { id: 1, name: "Signature Collection", slug: "signature-collection" },
+    { id: 2, name: "HardWear", slug: "hardwear" },
+    { id: 3, name: "Smile", slug: "smile" },
+    { id: 5, name: "Lock", slug: "lock" },
+    { id: 6, name: "High Jewelry", slug: "high-jewelry" }
+  ]
+  writeCategoriesLocal(defaults)
+  return defaults
+}
+
+function writeCategoriesLocal(categories: Category[]) {
+  try {
+    fs.writeFileSync(CATEGORIES_FILE, JSON.stringify(categories, null, 2), "utf-8")
+  } catch (e) {
+    console.error("Error writing local categories:", e)
+  }
+}
+
+function readTagsLocal(): Tag[] {
+  try {
+    if (fs.existsSync(TAGS_FILE)) {
+      return JSON.parse(fs.readFileSync(TAGS_FILE, "utf-8"))
+    }
+  } catch (e) {
+    console.error("Error reading local tags:", e)
+  }
+  const defaults = [
+    { id: 1, name: "Gold", slug: "gold" },
+    { id: 2, name: "Diamond", slug: "diamond" },
+    { id: 3, name: "Rose Gold", slug: "rose-gold" },
+    { id: 4, name: "White Gold", slug: "white-gold" },
+    { id: 5, name: "Yellow Gold", slug: "yellow-gold" },
+    { id: 6, name: "Pendant", slug: "pendant" },
+    { id: 7, name: "Bracelet", slug: "bracelet" },
+    { id: 8, name: "Necklace", slug: "necklace" },
+    { id: 9, name: "Ring", slug: "ring" }
+  ]
+  writeTagsLocal(defaults)
+  return defaults
+}
+
+function writeTagsLocal(tags: Tag[]) {
+  try {
+    fs.writeFileSync(TAGS_FILE, JSON.stringify(tags, null, 2), "utf-8")
+  } catch (e) {
+    console.error("Error writing local tags:", e)
+  }
+}
+
+function readContactsLocal(): ContactSubmission[] {
+  try {
+    if (fs.existsSync(CONTACTS_FILE)) {
+      return JSON.parse(fs.readFileSync(CONTACTS_FILE, "utf-8"))
+    }
+  } catch (e) {
+    console.error("Error reading local contacts:", e)
+  }
+  return []
+}
+
+function writeContactsLocal(contacts: ContactSubmission[]) {
+  try {
+    fs.writeFileSync(CONTACTS_FILE, JSON.stringify(contacts, null, 2), "utf-8")
+  } catch (e) {
+    console.error("Error writing local contacts:", e)
+  }
+}
+
 export async function readProducts(): Promise<Product[]> {
   const supabase = getSupabase()
   if (!supabase) {
-    console.warn("Supabase env variables missing or client not initialized. Falling back to default products.")
-    return defaultProducts
+    return readProductsLocal()
   }
 
   // Trigger seeding check
@@ -193,7 +296,7 @@ export async function readProducts(): Promise<Product[]> {
 export async function writeProducts(products: Product[]) {
   const supabase = getSupabase()
   if (!supabase) {
-    console.warn("Supabase env variables missing. Cannot write.")
+    writeProductsLocal(products)
     return
   }
 
@@ -221,15 +324,7 @@ export type Tag = {
 export async function readCategories(): Promise<Category[]> {
   const supabase = getSupabase()
   if (!supabase) {
-    console.warn("Supabase env missing. Falling back to default categories.")
-    return [
-      { id: 1, name: "Signature Collection", slug: "signature-collection" },
-      { id: 2, name: "HardWear", slug: "hardwear" },
-      { id: 3, name: "Smile", slug: "smile" },
-      { id: 4, name: "T1", slug: "t1" },
-      { id: 5, name: "Lock", slug: "lock" },
-      { id: 6, name: "High Jewelry", slug: "high-jewelry" }
-    ]
+    return readCategoriesLocal()
   }
 
   const { data, error } = await supabase
@@ -249,7 +344,11 @@ export async function addCategory(name: string): Promise<Category | null> {
   const supabase = getSupabase()
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
   if (!supabase) {
-    return { id: Date.now(), name, slug }
+    const list = readCategoriesLocal()
+    const newCat = { id: Date.now(), name, slug }
+    list.push(newCat)
+    writeCategoriesLocal(list)
+    return newCat
   }
 
   const { data, error } = await supabase
@@ -267,7 +366,12 @@ export async function addCategory(name: string): Promise<Category | null> {
 
 export async function deleteCategory(id: any): Promise<boolean> {
   const supabase = getSupabase()
-  if (!supabase) return true
+  if (!supabase) {
+    const list = readCategoriesLocal()
+    const filtered = list.filter(c => String(c.id) !== String(id))
+    writeCategoriesLocal(filtered)
+    return true
+  }
 
   const { error } = await supabase
     .from("categories")
@@ -285,18 +389,7 @@ export async function deleteCategory(id: any): Promise<boolean> {
 export async function readTags(): Promise<Tag[]> {
   const supabase = getSupabase()
   if (!supabase) {
-    console.warn("Supabase env missing. Falling back to default tags.")
-    return [
-      { id: 1, name: "Gold", slug: "gold" },
-      { id: 2, name: "Diamond", slug: "diamond" },
-      { id: 3, name: "Rose Gold", slug: "rose-gold" },
-      { id: 4, name: "White Gold", slug: "white-gold" },
-      { id: 5, name: "Yellow Gold", slug: "yellow-gold" },
-      { id: 6, name: "Pendant", slug: "pendant" },
-      { id: 7, name: "Bracelet", slug: "bracelet" },
-      { id: 8, name: "Necklace", slug: "necklace" },
-      { id: 9, name: "Ring", slug: "ring" }
-    ]
+    return readTagsLocal()
   }
 
   const { data, error } = await supabase
@@ -316,7 +409,11 @@ export async function addTag(name: string): Promise<Tag | null> {
   const supabase = getSupabase()
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
   if (!supabase) {
-    return { id: Date.now(), name, slug }
+    const list = readTagsLocal()
+    const newTag = { id: Date.now(), name, slug }
+    list.push(newTag)
+    writeTagsLocal(list)
+    return newTag
   }
 
   const { data, error } = await supabase
@@ -334,7 +431,12 @@ export async function addTag(name: string): Promise<Tag | null> {
 
 export async function deleteTag(id: any): Promise<boolean> {
   const supabase = getSupabase()
-  if (!supabase) return true
+  if (!supabase) {
+    const list = readTagsLocal()
+    const filtered = list.filter(t => String(t.id) !== String(id))
+    writeTagsLocal(filtered)
+    return true
+  }
 
   const { error } = await supabase
     .from("tags")
@@ -385,8 +487,7 @@ export type ContactSubmission = {
 export async function readContacts(): Promise<ContactSubmission[]> {
   const supabase = getSupabase()
   if (!supabase) {
-    console.warn("Supabase env variables missing. Returning empty contacts.")
-    return []
+    return readContactsLocal()
   }
 
   const { data, error } = await supabase
@@ -416,7 +517,7 @@ export async function readContacts(): Promise<ContactSubmission[]> {
 export async function writeContacts(contacts: ContactSubmission[]) {
   const supabase = getSupabase()
   if (!supabase) {
-    console.warn("Supabase env variables missing. Cannot write contacts.")
+    writeContactsLocal(contacts)
     return
   }
 
