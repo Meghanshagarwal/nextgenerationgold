@@ -69,7 +69,7 @@ export default function AboutUsPage() {
         </div>
 
         {/* SECTION 1: Beginning */}
-        <section className="max-w-7xl mx-auto px-6 sm:px-12 py-12 lg:py-16">
+        <section id="story" className="max-w-7xl mx-auto px-6 sm:px-12 py-12 lg:py-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             <div className="overflow-hidden rounded shadow-md border border-[#EAEAEA] bg-white">
               <img 
@@ -145,7 +145,7 @@ export default function AboutUsPage() {
               {/* Right Side: Vision & Mission Details */}
               <div className="lg:col-span-8 flex flex-col gap-12">
                 {/* Vision block */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center border-b border-[#EAEAEA] pb-12">
+                <div id="vision" className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center border-b border-[#EAEAEA] pb-12">
                   <div className="md:col-span-8 flex flex-col gap-4">
                     <span className="text-[10px] uppercase tracking-widest text-[#9A7B4F] font-bold">Future Outlook</span>
                     <h2 className="font-serif text-3xl text-[#1C1C1C] font-semibold tracking-wide">
@@ -165,7 +165,7 @@ export default function AboutUsPage() {
                 </div>
 
                 {/* Mission block */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-2">
+                <div id="mission" className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-2">
                   <div className="md:col-span-4 overflow-hidden rounded border border-[#EAEAEA]">
                     <img 
                       src={data.missionImage} 

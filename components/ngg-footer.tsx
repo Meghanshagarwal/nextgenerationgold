@@ -1,24 +1,61 @@
-import Link from "next/link"
+"use client"
 
-const footerColumns = [
-  {
-    title: "Customer Service",
-    links: ["Contact Us", "FAQs", "Track Your Order", "Shipping & Returns", "Product Care"],
-  },
-  {
-    title: "About Next Generation Gold",
-    links: ["Our Story", "Sustainability", "Careers", "Newsroom", "Diamond Source"],
-  },
-  {
-    title: "Services",
-    links: ["Book an Appointment", "Engraving", "Repairs", "Store Locator", "Gift Wrapping"],
-  },
-]
+import Link from "next/link"
+import { useState, useEffect } from "react"
 
 export function NggFooter() {
+  const [topCategories, setTopCategories] = useState<Array<{ name: string; slug: string }>>([
+    { name: "Jewelry", slug: "jewelry" },
+    { name: "High Jewelry", slug: "high-jewelry" },
+    { name: "Love & Engagement", slug: "love-engagement" },
+    { name: "Watches", slug: "watches" },
+    { name: "Accessories", slug: "accessories" }
+  ])
+
+  useEffect(() => {
+    async function fetchTopCategories() {
+      try {
+        const res = await fetch("/api/products")
+        if (res.ok) {
+          const products = await res.json()
+          
+          // Count products per category
+          const counts: { [key: string]: number } = {}
+          products.forEach((p: any) => {
+            if (p.category) {
+              const cat = p.category.trim()
+              counts[cat] = (counts[cat] || 0) + 1
+            }
+          })
+
+          // Sort by count descending and take top 5
+          const sorted = Object.keys(counts)
+            .map(name => {
+              // Convert category name to slug
+              const slug = name
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/(^-|-$)+/g, "")
+              return { name, slug, count: counts[name] }
+            })
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5)
+
+          if (sorted.length > 0) {
+            setTopCategories(sorted.map(s => ({ name: s.name, slug: s.slug })))
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load top categories for footer:", e)
+      }
+    }
+    fetchTopCategories()
+  }, [])
+
   return (
     <footer className="bg-foreground text-background">
       <div className="mx-auto max-w-[1600px] px-6 py-16 md:px-10">
+        
         {/* Newsletter */}
         <div className="mx-auto max-w-xl text-center">
           <h3 className="font-serif text-2xl md:text-3xl">Stay in Touch</h3>
@@ -43,20 +80,70 @@ export function NggFooter() {
 
         {/* Link columns */}
         <div className="mt-16 grid grid-cols-1 gap-10 border-t border-background/20 pt-12 sm:grid-cols-3">
-          {footerColumns.map((column) => (
-            <div key={column.title}>
-              <h4 className="text-xs font-semibold tracking-widest uppercase">{column.title}</h4>
-              <ul className="mt-4 flex flex-col gap-3">
-                {column.links.map((link) => (
-                  <li key={link}>
-                    <Link href="#" className="text-sm text-background/70 transition-colors hover:text-background">
-                      {link}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          
+          {/* Column 1: CUSTOMER SERVICE */}
+          <div>
+            <h4 className="text-xs font-semibold tracking-widest uppercase text-background">Customer Service</h4>
+            <ul className="mt-4 flex flex-col gap-3">
+              <li>
+                <Link href="/contact" className="text-sm text-background/70 transition-colors hover:text-background">
+                  Contact Us
+                </Link>
+              </li>
+              <li>
+                <Link href="/about-us" className="text-sm text-background/70 transition-colors hover:text-background">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link href="#" className="text-sm text-background/70 transition-colors hover:text-background">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="#" className="text-sm text-background/70 transition-colors hover:text-background">
+                  Terms and Conditions
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 2: ABOUT NEXT GENERATION GOLD */}
+          <div>
+            <h4 className="text-xs font-semibold tracking-widest uppercase text-background">About Next Generation Gold</h4>
+            <ul className="mt-4 flex flex-col gap-3">
+              <li>
+                <Link href="/about-us#story" className="text-sm text-background/70 transition-colors hover:text-background">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link href="/about-us#mission" className="text-sm text-background/70 transition-colors hover:text-background">
+                  Our Mission
+                </Link>
+              </li>
+              <li>
+                <Link href="/about-us#vision" className="text-sm text-background/70 transition-colors hover:text-background">
+                  Our Vision
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 3: CATEGORIES */}
+          <div>
+            <h4 className="text-xs font-semibold tracking-widest uppercase text-background">Categories</h4>
+            <ul className="mt-4 flex flex-col gap-3">
+              {topCategories.map((cat) => (
+                <li key={cat.slug}>
+                  <Link href={`/category/${cat.slug}`} className="text-sm text-background/70 transition-colors hover:text-background capitalize">
+                    {cat.name.toLowerCase()}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
         </div>
 
         {/* Bottom bar */}
