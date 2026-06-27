@@ -42,8 +42,8 @@ function AdminPageContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab") as any
   
-  // Navigation tabs: 'overview' | 'products' | 'categories_tags' | 'contacts' | 'about_us'
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "categories_tags" | "contacts" | "about_us">("overview")
+  // Navigation tabs: 'overview' | 'products' | 'categories_tags' | 'contacts' | 'about_us' | 'high_jewelry'
+  const [activeTab, setActiveTab] = useState<"overview" | "products" | "categories_tags" | "contacts" | "about_us" | "high_jewelry">("overview")
   const [products, setProducts] = useState<Product[]>([])
   const [contacts, setContacts] = useState<ContactSubmission[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -68,6 +68,11 @@ function AdminPageContent() {
   const [aboutUs, setAboutUs] = useState<any>(null)
   const [aboutUsError, setAboutUsError] = useState("")
   const [aboutUsSuccess, setAboutUsSuccess] = useState("")
+
+  // High Jewelry settings states
+  const [highJewelry, setHighJewelry] = useState<any>(null)
+  const [highJewelryError, setHighJewelryError] = useState("")
+  const [highJewelrySuccess, setHighJewelrySuccess] = useState("")
 
   const exportLeadsToCSV = () => {
     const leads = contacts.filter(c => c.type === "lead")
@@ -115,12 +120,13 @@ function AdminPageContent() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [prodRes, conRes, catRes, tagRes, aboutRes] = await Promise.all([
+      const [prodRes, conRes, catRes, tagRes, aboutRes, hjRes] = await Promise.all([
         fetch("/api/products"),
         fetch("/api/contacts"),
         fetch("/api/categories"),
         fetch("/api/tags"),
-        fetch("/api/about-us")
+        fetch("/api/about-us"),
+        fetch("/api/high-jewelry")
       ])
       
       if (prodRes.ok) setProducts(await prodRes.json())
@@ -128,6 +134,7 @@ function AdminPageContent() {
       if (catRes.ok) setCategories(await catRes.json())
       if (tagRes.ok) setTags(await tagRes.json())
       if (aboutRes.ok) setAboutUs(await aboutRes.json())
+      if (hjRes.ok) setHighJewelry(await hjRes.json())
     } catch (e) {
       console.error("Failed to load admin data:", e)
     } finally {
@@ -238,7 +245,7 @@ function AdminPageContent() {
     }
   }
 
-  const handleTabChange = (tab: "overview" | "products" | "categories_tags" | "contacts" | "about_us") => {
+  const handleTabChange = (tab: "overview" | "products" | "categories_tags" | "contacts" | "about_us" | "high_jewelry") => {
     setActiveTab(tab)
     router.replace(`/admin?tab=${tab}`)
   }
@@ -267,6 +274,33 @@ function AdminPageContent() {
       }
     } catch (e) {
       setAboutUsError("Network error. Please try again.")
+    }
+  }
+
+  const handleSaveHighJewelry = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setHighJewelryError("")
+    setHighJewelrySuccess("")
+    
+    try {
+      const res = await fetch("/api/high-jewelry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(highJewelry)
+      })
+      
+      if (res.ok) {
+        setHighJewelrySuccess("High Jewelry details updated successfully!")
+        setTimeout(() => setHighJewelrySuccess(""), 3000)
+      } else {
+        const err = await res.json()
+        const msg = err.fix
+          ? `${err.error}\n\nSQL Fix:\n${err.fix}`
+          : err.error || "Failed to update details"
+        setHighJewelryError(msg)
+      }
+    } catch (e) {
+      setHighJewelryError("Network error. Please try again.")
     }
   }
 
@@ -360,6 +394,17 @@ function AdminPageContent() {
             >
               <Info className="h-4 w-4" strokeWidth={1.5} />
               About Us Settings
+            </button>
+            <button
+              onClick={() => handleTabChange("high_jewelry")}
+              className={`flex items-center gap-3 px-4 py-3 text-xs font-semibold tracking-wider uppercase transition-all duration-300 w-full rounded-md ${
+                activeTab === "high_jewelry" 
+                  ? "bg-[#FAF6F0] text-[#9A7B4F] border-l-2 border-[#9A7B4F]" 
+                  : "text-muted-foreground hover:bg-[#F9F9F9] hover:text-[#1C1C1C]"
+              }`}
+            >
+              <Star className="h-4 w-4" strokeWidth={1.5} />
+              High Jewelry Settings
             </button>
           </nav>
         </aside>
@@ -849,11 +894,11 @@ function AdminPageContent() {
                     
                     {/* Beginning Story Section */}
                     <div className="flex flex-col gap-5">
-                      <h3 className="text-xs uppercase tracking-widest text-[#9A7B4F] font-bold border-b border-[#FAF6F0] pb-2">1. Origin Story Section</h3>
                       
+                      {/* Beginning Section Grid */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2">
-                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Beginning Section Title</label>
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Beginning Title</label>
                           <input
                             type="text"
                             value={aboutUs.beginningTitle || ""}
@@ -1032,6 +1077,100 @@ function AdminPageContent() {
                       className="bg-[#9A7B4F] hover:bg-[#856941] text-white py-4 text-xs font-semibold uppercase tracking-widest mt-4 transition-colors duration-300 rounded shadow-xs"
                     >
                       Save About Us Details
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {activeTab === "high_jewelry" && highJewelry && (
+                <div className="flex flex-col gap-6 max-w-4xl">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-bold text-[#9A7B4F] uppercase tracking-widest">Settings Panel</span>
+                    <h2 className="font-serif text-2xl md:text-3xl text-[#1C1C1C] font-semibold tracking-wide">High Jewelry Page Settings</h2>
+                    <p className="text-xs text-muted-foreground font-medium">Update the banner image, headers, text description overlays, and page intro copy of your luxury High Jewelry section.</p>
+                  </div>
+
+                  {highJewelrySuccess && (
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs px-4 py-3 rounded font-semibold">
+                      {highJewelrySuccess}
+                    </div>
+                  )}
+                  {highJewelryError && (
+                    <div className="bg-red-50 border border-red-200 text-red-800 text-xs px-4 py-3 rounded font-semibold whitespace-pre-wrap font-mono leading-relaxed">
+                      {highJewelryError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSaveHighJewelry} className="flex flex-col gap-8 bg-white border border-[#EAEAEA] p-8 rounded shadow-xs">
+                    
+                    {/* Header Intro Section */}
+                    <div className="flex flex-col gap-5">
+                      <h3 className="text-xs uppercase tracking-widest text-[#9A7B4F] font-bold border-b border-[#FAF6F0] pb-2">1. Page Intro Copy</h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Intro Title</label>
+                          <input
+                            type="text"
+                            value={highJewelry.title || ""}
+                            onChange={(e) => setHighJewelry({ ...highJewelry, title: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Intro Paragraph Description</label>
+                        <textarea
+                          rows={4}
+                          value={highJewelry.description || ""}
+                          onChange={(e) => setHighJewelry({ ...highJewelry, description: e.target.value })}
+                          className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C] leading-relaxed resize-y"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Banner Section */}
+                    <div className="flex flex-col gap-5 mt-4">
+                      <h3 className="text-xs uppercase tracking-widest text-[#9A7B4F] font-bold border-b border-[#FAF6F0] pb-2">2. Hero Banner & Overlays</h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Banner Main Title Overlay</label>
+                          <input
+                            type="text"
+                            value={highJewelry.bannerTitle || ""}
+                            onChange={(e) => setHighJewelry({ ...highJewelry, bannerTitle: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Banner Subtitle Overlay</label>
+                          <input
+                            type="text"
+                            value={highJewelry.bannerSubtitle || ""}
+                            onChange={(e) => setHighJewelry({ ...highJewelry, bannerSubtitle: e.target.value })}
+                            className="bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <ImageUploader
+                        label="Hero Banner Image"
+                        value={highJewelry.bannerImage || ""}
+                        onSelect={(url) => setHighJewelry({ ...highJewelry, bannerImage: url })}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="bg-[#9A7B4F] hover:bg-[#856941] text-white py-4 text-xs font-semibold uppercase tracking-widest mt-4 transition-colors duration-300 rounded shadow-xs"
+                    >
+                      Save High Jewelry Details
                     </button>
                   </form>
                 </div>

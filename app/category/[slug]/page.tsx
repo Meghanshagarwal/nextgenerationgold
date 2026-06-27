@@ -13,12 +13,37 @@ export default function CategoryPage() {
   const slug = params.slug as string
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [highJewelrySettings, setHighJewelrySettings] = useState<{
+    title: string
+    description: string
+    bannerImage: string
+    bannerTitle: string
+    bannerSubtitle: string
+  } | null>(null)
 
   // Filters State
   const [selectedCollections, setSelectedCollections] = useState<string[]>([])
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<string>("featured")
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+
+  // Fetch High Jewelry settings
+  useEffect(() => {
+    if (slug === "high-jewelry") {
+      async function fetchHighJewelry() {
+        try {
+          const res = await fetch("/api/high-jewelry", { cache: "no-store" })
+          if (res.ok) {
+            const data = await res.json()
+            setHighJewelrySettings(data)
+          }
+        } catch (e) {
+          console.error("Failed to load high jewelry settings:", e)
+        }
+      }
+      fetchHighJewelry()
+    }
+  }, [slug])
 
   // Fetch products
   useEffect(() => {
@@ -173,9 +198,11 @@ export default function CategoryPage() {
       {slug === "high-jewelry" ? (
         <section className="bg-background pt-12 pb-8 md:pt-16 text-center">
           <div className="mx-auto max-w-[1200px] px-6">
-            <h1 className="font-serif text-4xl text-foreground md:text-5xl lg:text-6xl tracking-wide">High Jewelry</h1>
+            <h1 className="font-serif text-4xl text-foreground md:text-5xl lg:text-6xl tracking-wide">
+              {highJewelrySettings?.title || "High Jewelry"}
+            </h1>
             <p className="mx-auto mt-6 max-w-3xl text-sm md:text-base text-muted-foreground leading-relaxed">
-              As the premier Indian high jewelry house, Next Generation Gold is celebrated for its inventive artistry, unparalleled craft and a love of extraordinary diamonds and colored gemstones. Our artisans set these miracles of nature into exquisite creations, symbolizing a constant dialogue between maker and material, craft and creativity.
+              {highJewelrySettings?.description || "As the premier Indian high jewelry house, Next Generation Gold is celebrated for its inventive artistry, unparalleled craft and a love of extraordinary diamonds and colored gemstones. Our artisans set these miracles of nature into exquisite creations, symbolizing a constant dialogue between maker and material, craft and creativity."}
             </p>
           </div>
           
@@ -183,17 +210,17 @@ export default function CategoryPage() {
           <div className="mx-auto max-w-[1600px] px-6 md:px-10 mt-12 mb-4">
             <div className="relative aspect-[16/7] w-full overflow-hidden bg-secondary">
               <img 
-                src="/images/high-jewelry-banner.png" 
+                src={highJewelrySettings?.bannerImage || "/images/high-jewelry-banner.png"} 
                 alt="Next Generation Gold High Jewelry Collection"
                 className="h-full w-full object-cover object-center"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex flex-col justify-end p-8 md:p-16">
                 <div className="max-w-xl text-left text-white">
                   <h3 className="font-serif text-3xl md:text-4xl lg:text-5xl font-light tracking-wide leading-tight">
-                    Introducing Our New Collection
+                    {highJewelrySettings?.bannerTitle || "Introducing Our New Collection"}
                   </h3>
                   <p className="mt-3 text-xs md:text-sm tracking-widest uppercase font-medium text-white/90">
-                    A Celebration of Unmatched Artistry
+                    {highJewelrySettings?.bannerSubtitle || "A Celebration of Unmatched Artistry"}
                   </p>
                 </div>
               </div>
@@ -236,7 +263,7 @@ export default function CategoryPage() {
               {processedProducts.length} {processedProducts.length === 1 ? "Product" : "Products"}
             </span>
             <h2 className="font-serif text-xl md:text-2xl lg:text-3xl text-foreground tracking-wide text-center uppercase min-w-[120px] select-none">
-              {slug === "high-jewelry" ? "High Jewelry" : categoryTitle}
+              {slug === "high-jewelry" ? (highJewelrySettings?.title || "High Jewelry") : categoryTitle}
             </h2>
             <label className="hidden lg:flex items-center gap-2 cursor-pointer select-none text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
               <input 
