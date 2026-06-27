@@ -4,20 +4,34 @@ import Link from "next/link"
 import { useEffect, useState, useRef } from "react"
 import { Search, MapPin, User, ShoppingBag, ConciergeBell, Menu, X } from "lucide-react"
 
-const navItems = [
-  { name: "HIGH JEWELRY", href: "/category/high-jewelry" },
-  { name: "JEWELRY", href: "/category/jewelry" },
-  { name: "LOVE & ENGAGEMENT", href: "/category/love-engagement" },
-  { name: "WATCHES", href: "/category/watches" },
-  { name: "HOME", href: "/category/home" },
-  { name: "ACCESSORIES", href: "/category/accessories" },
-  { name: "ABOUT US", href: "/about-us" },
-]
-
 export function NggHeader() {
+  const [navItems, setNavItems] = useState<Array<{ id: number, name: string, href: string }>>([
+    { id: 1, name: "HIGH JEWELRY", href: "/category/high-jewelry" },
+    { id: 2, name: "JEWELRY", href: "/category/jewelry" },
+    { id: 3, name: "LOVE & ENGAGEMENT", href: "/category/love-engagement" },
+    { id: 4, name: "WATCHES", href: "/category/watches" },
+    { id: 5, name: "HOME", href: "/category/home" },
+    { id: 6, name: "ACCESSORIES", href: "/category/accessories" },
+    { id: 7, name: "ABOUT US", href: "/about-us" },
+  ])
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const headerRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    async function fetchMenu() {
+      try {
+        const res = await fetch("/api/navigation-menu", { cache: "no-store" })
+        if (res.ok) {
+          const data = await res.json()
+          setNavItems(data)
+        }
+      } catch (e) {
+        console.error("Failed to load navigation menu:", e)
+      }
+    }
+    fetchMenu()
+  }, [])
 
   useEffect(() => {
     const updateHeaderHeight = () => {

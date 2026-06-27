@@ -42,8 +42,8 @@ function AdminPageContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab") as any
   
-  // Navigation tabs: 'overview' | 'products' | 'categories_tags' | 'contacts' | 'about_us' | 'high_jewelry' | 'jewelry_page'
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "categories_tags" | "contacts" | "about_us" | "high_jewelry" | "jewelry_page">("overview")
+  // Navigation tabs: 'overview' | 'products' | 'categories_tags' | 'contacts' | 'about_us' | 'high_jewelry' | 'jewelry_page' | 'navigation_menu'
+  const [activeTab, setActiveTab] = useState<"overview" | "products" | "categories_tags" | "contacts" | "about_us" | "high_jewelry" | "jewelry_page" | "navigation_menu">("overview")
   const [products, setProducts] = useState<Product[]>([])
   const [contacts, setContacts] = useState<ContactSubmission[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -78,6 +78,11 @@ function AdminPageContent() {
   const [jewelryPage, setJewelryPage] = useState<any>(null)
   const [jewelryPageError, setJewelryPageError] = useState("")
   const [jewelryPageSuccess, setJewelryPageSuccess] = useState("")
+
+  // Navigation menu settings states
+  const [navigationMenu, setNavigationMenu] = useState<any[] | null>(null)
+  const [navigationMenuError, setNavigationMenuError] = useState("")
+  const [navigationMenuSuccess, setNavigationMenuSuccess] = useState("")
 
   const exportLeadsToCSV = () => {
     const leads = contacts.filter(c => c.type === "lead")
@@ -116,7 +121,7 @@ function AdminPageContent() {
 
   // Sync with search parameter tab on load
   useEffect(() => {
-    if (tabParam && ["overview", "products", "categories_tags", "contacts", "about_us", "high_jewelry", "jewelry_page"].includes(tabParam)) {
+    if (tabParam && ["overview", "products", "categories_tags", "contacts", "about_us", "high_jewelry", "jewelry_page", "navigation_menu"].includes(tabParam)) {
       setActiveTab(tabParam)
     }
   }, [tabParam])
@@ -125,14 +130,15 @@ function AdminPageContent() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [prodRes, conRes, catRes, tagRes, aboutRes, hjRes, jpRes] = await Promise.all([
+      const [prodRes, conRes, catRes, tagRes, aboutRes, hjRes, jpRes, nmRes] = await Promise.all([
         fetch("/api/products"),
         fetch("/api/contacts"),
         fetch("/api/categories"),
         fetch("/api/tags"),
         fetch("/api/about-us"),
         fetch("/api/high-jewelry"),
-        fetch("/api/jewelry-page")
+        fetch("/api/jewelry-page"),
+        fetch("/api/navigation-menu")
       ])
       
       if (prodRes.ok) setProducts(await prodRes.json())
@@ -142,6 +148,7 @@ function AdminPageContent() {
       if (aboutRes.ok) setAboutUs(await aboutRes.json())
       if (hjRes.ok) setHighJewelry(await hjRes.json())
       if (jpRes.ok) setJewelryPage(await jpRes.json())
+      if (nmRes.ok) setNavigationMenu(await nmRes.json())
     } catch (e) {
       console.error("Failed to load admin data:", e)
     } finally {
@@ -338,6 +345,33 @@ function AdminPageContent() {
     }
   }
 
+  const handleSaveNavigationMenu = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setNavigationMenuError("")
+    setNavigationMenuSuccess("")
+    
+    try {
+      const res = await fetch("/api/navigation-menu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(navigationMenu)
+      })
+      
+      if (res.ok) {
+        setNavigationMenuSuccess("Navigation menu items updated successfully!")
+        setTimeout(() => setNavigationMenuSuccess(""), 3000)
+      } else {
+        const err = await res.json()
+        const msg = err.fix
+          ? `${err.error}\n\nSQL Fix:\n${err.fix}`
+          : err.error || "Failed to update menu items"
+        setNavigationMenuError(msg)
+      }
+    } catch (e) {
+      setNavigationMenuError("Network error. Please try again.")
+    }
+  }
+
   // Filtered products list
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -450,6 +484,17 @@ function AdminPageContent() {
             >
               <Package className="h-4 w-4" strokeWidth={1.5} />
               Jewelry Page Subcats
+            </button>
+            <button
+              onClick={() => handleTabChange("navigation_menu")}
+              className={`flex items-center gap-3 px-4 py-3 text-xs font-semibold tracking-wider uppercase transition-all duration-300 w-full rounded-md ${
+                activeTab === "navigation_menu" 
+                  ? "bg-[#FAF6F0] text-[#9A7B4F] border-l-2 border-[#9A7B4F]" 
+                  : "text-muted-foreground hover:bg-[#F9F9F9] hover:text-[#1C1C1C]"
+              }`}
+            >
+              <LayoutDashboard className="h-4 w-4" strokeWidth={1.5} />
+              Navigation Menu
             </button>
           </nav>
         </aside>
@@ -1295,6 +1340,105 @@ function AdminPageContent() {
                       className="bg-[#9A7B4F] hover:bg-[#856941] text-white py-4 text-xs font-semibold uppercase tracking-widest mt-4 transition-colors duration-300 rounded shadow-xs"
                     >
                       Save Jewelry Page Settings
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {activeTab === "navigation_menu" && navigationMenu && (
+                <div className="flex flex-col gap-6 max-w-4xl">
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[10px] font-bold text-[#9A7B4F] uppercase tracking-widest">Settings Panel</span>
+                      <h2 className="font-serif text-2xl md:text-3xl text-[#1C1C1C] font-semibold tracking-wide">Header Navigation Menu Settings</h2>
+                      <p className="text-xs text-muted-foreground font-medium">Add, delete, rename, or update the links inside the main header navigation menu of Next Generation Gold.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextId = navigationMenu.length > 0 ? Math.max(...navigationMenu.map(m => m.id)) + 1 : 1
+                        setNavigationMenu([...navigationMenu, { id: nextId, name: "NEW ITEM", href: "/category/new" }])
+                      }}
+                      className="flex items-center gap-2 bg-[#9A7B4F] hover:bg-[#856941] text-white px-4 py-2.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors shrink-0 shadow-xs"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add Item
+                    </button>
+                  </div>
+
+                  {navigationMenuSuccess && (
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs px-4 py-3 rounded font-semibold">
+                      {navigationMenuSuccess}
+                    </div>
+                  )}
+                  {navigationMenuError && (
+                    <div className="bg-red-50 border border-red-200 text-red-800 text-xs px-4 py-3 rounded font-semibold whitespace-pre-wrap font-mono leading-relaxed">
+                      {navigationMenuError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSaveNavigationMenu} className="flex flex-col gap-6 bg-white border border-[#EAEAEA] p-8 rounded shadow-xs">
+                    
+                    {navigationMenu.length === 0 ? (
+                      <div className="text-center py-8 text-xs text-muted-foreground font-semibold">
+                        No menu items. Click "Add Item" above to create one.
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                        {navigationMenu.map((item, idx) => (
+                          <div key={item.id} className="flex items-end gap-4 p-4 border border-[#F5F5F5] rounded bg-[#FAF9F6]">
+                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-2">
+                                <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Item Name (e.g. WATCHES)</label>
+                                <input
+                                  type="text"
+                                  value={item.name || ""}
+                                  onChange={(e) => {
+                                    const nextMenu = [...navigationMenu]
+                                    nextMenu[idx] = { ...item, name: e.target.value }
+                                    setNavigationMenu(nextMenu)
+                                  }}
+                                  className="bg-white border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                                  required
+                                />
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Target URL (e.g. /category/watches)</label>
+                                <input
+                                  type="text"
+                                  value={item.href || ""}
+                                  onChange={(e) => {
+                                    const nextMenu = [...navigationMenu]
+                                    nextMenu[idx] = { ...item, href: e.target.value }
+                                    setNavigationMenu(nextMenu)
+                                  }}
+                                  className="bg-white border border-[#EAEAEA] px-4 py-2.5 text-xs focus:outline-none focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const nextMenu = navigationMenu.filter(m => m.id !== item.id)
+                                setNavigationMenu(nextMenu)
+                              }}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 border border-transparent hover:border-red-100 p-2.5 rounded transition-all shrink-0 mb-0.5"
+                              title="Delete Item"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="bg-[#9A7B4F] hover:bg-[#856941] text-white py-4 text-xs font-semibold uppercase tracking-widest mt-4 transition-colors duration-300 rounded shadow-xs"
+                    >
+                      Save Navigation Menu Items
                     </button>
                   </form>
                 </div>
