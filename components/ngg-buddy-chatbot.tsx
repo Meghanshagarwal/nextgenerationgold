@@ -105,7 +105,7 @@ export function NggBuddyChatbot() {
   useEffect(() => {
     if (allProducts.length > 0) {
       // 1. Get unique categories
-      const categories = Array.from(new Set(allProducts.map(p => p.category).filter(Boolean)))
+      const categories = Array.from(new Set(allProducts.flatMap(p => p.category ? p.category.split(',').map(c => c.trim()) : []).filter(Boolean)))
       // 2. Get unique tags
       const tagsSet = new Set<string>()
       allProducts.forEach(p => {
@@ -618,7 +618,7 @@ export function NggBuddyChatbot() {
 
     // Re-generate list and reshuffle suggestions
     if (allProducts.length > 0) {
-      const categories = Array.from(new Set(allProducts.map(p => p.category).filter(Boolean)))
+      const categories = Array.from(new Set(allProducts.flatMap(p => p.category ? p.category.split(',').map(c => c.trim()) : []).filter(Boolean)))
       const tagsSet = new Set<string>()
       allProducts.forEach(p => {
         if (Array.isArray(p.tags)) {

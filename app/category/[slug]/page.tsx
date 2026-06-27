@@ -125,8 +125,8 @@ export default function CategoryPage() {
     // Check if any product has a matching category field
     const categoryFiltered = products.filter(p => {
       if (!p.category) return false
-      const normalizedCat = p.category.toLowerCase().replace(/[^a-z0-9]/g, "")
-      return normalizedCat === normalizedSlug || normalizedCat.includes(normalizedSlug) || normalizedSlug.includes(normalizedCat)
+      const cats = p.category.split(',').map(c => c.trim().toLowerCase().replace(/[^a-z0-9]/g, ""))
+      return cats.some(c => c === normalizedSlug || c.includes(normalizedSlug) || normalizedSlug.includes(c))
     })
 
     if (categoryFiltered.length > 0) {

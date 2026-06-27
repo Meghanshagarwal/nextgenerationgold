@@ -76,7 +76,8 @@ export default function EditProductPage() {
     images: [] as string[],
     details: "",
     featured: true,
-    selectedTags: [] as string[]
+    selectedTags: [] as string[],
+    selectedCategories: [] as string[]
   })
 
   // Load config (categories & tags) & product details
@@ -105,7 +106,7 @@ export default function EditProductPage() {
             name: product.name || "",
             sku: product.sku || "",
             collection: product.collection || "Signature Collection",
-            category: product.category || (loadedCategories.length > 0 ? loadedCategories[0].name : ""),
+            category: product.category || "",
             productType: product.productType || "",
             shortDescription: product.shortDescription || "",
             description: product.description || "",
@@ -144,7 +145,8 @@ export default function EditProductPage() {
             images: product.images || [],
             details: Array.isArray(product.details) ? product.details.join("\n") : "",
             featured: product.featured !== false,
-            selectedTags: Array.isArray(product.tags) ? product.tags : []
+            selectedTags: Array.isArray(product.tags) ? product.tags : [],
+            selectedCategories: product.category ? product.category.split(',').map(c => c.trim()).filter(Boolean) : []
           })
         } else {
           setFormError("Product not found or failed to retrieve catalog record.")
@@ -182,6 +184,18 @@ export default function EditProductPage() {
     })
   }
 
+  const handleCategoryToggle = (catName: string) => {
+    setFormData(prev => {
+      const alreadySelected = prev.selectedCategories.includes(catName)
+      return {
+        ...prev,
+        selectedCategories: alreadySelected
+          ? prev.selectedCategories.filter(c => c !== catName)
+          : [...prev.selectedCategories, catName]
+      }
+    })
+  }
+
   const generateSku = () => {
     const prefix = "NGG"
     const colCode = formData.collection.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, "X")
@@ -203,6 +217,7 @@ export default function EditProductPage() {
 
     const payload = {
       ...formData,
+      category: formData.selectedCategories.join(", "),
       tags: formData.selectedTags
     }
 
@@ -337,24 +352,41 @@ export default function EditProductPage() {
                   <option value="T1">T1</option>
                   <option value="Lock">Lock</option>
                   <option value="High Jewelry">High Jewelry</option>
+                  <option value="Émeraude Lumière Ring Collection">Émeraude Lumière Ring Collection</option>
+                  <option value="Aurora Opaline Collection">Aurora Opaline Collection</option>
+                  <option value="Rosé Lumière Collection">Rosé Lumière Collection</option>
+                  <option value="Aurelia Lumière Collection">Aurelia Lumière Collection</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Category *</label>
+                <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Categories (Select Multiple) *</label>
                 {loadingConfig ? (
                   <div className="h-11 w-full bg-[#F9F9F9] border border-[#EAEAEA] rounded animate-pulse" />
                 ) : (
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    className="w-full bg-[#F9F9F9] border border-[#EAEAEA] px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-[#9A7B4F] transition-all rounded text-[#1C1C1C]"
-                  >
-                    {categories.map(c => (
-                      <option key={c.id} value={c.name}>{c.name}</option>
-                    ))}
-                  </select>
+                  <div className="flex flex-wrap gap-2 p-3 border border-[#EAEAEA] bg-[#FAF9F6] rounded">
+                    {categories.length === 0 ? (
+                      <span className="text-xs text-muted-foreground font-medium">No categories found.</span>
+                    ) : (
+                      categories.map(c => {
+                        const isSelected = formData.selectedCategories.includes(c.name)
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => handleCategoryToggle(c.name)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border transition-all ${
+                              isSelected 
+                                ? "bg-[#9A7B4F] border-[#9A7B4F] text-white" 
+                                : "bg-white border-[#EAEAEA] text-muted-foreground hover:border-[#9A7B4F] hover:text-[#9A7B4F]"
+                            }`}
+                          >
+                            {c.name}
+                          </button>
+                        )
+                      })
+                    )}
+                  </div>
                 )}
               </div>
 

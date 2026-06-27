@@ -49,6 +49,8 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS shipping_info TEXT;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_title TEXT;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_description TEXT;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS images TEXT[] DEFAULT '{}';
+
 
 -- 4. Seed default categories if empty
 INSERT INTO categories (name, slug)
